@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,53 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* AgriSarthi Custom Styles */
+.brand-name {
+  margin-right: 1.5rem;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, rgba(147,250,165,0.1) 0%, rgba(123,232,131,0.2) 100%);
+}
+
+.card-gradient {
+  background: linear-gradient(180deg, rgba(249,255,182,0.1) 0%, rgba(226,255,172,0.2) 100%);
+}
+
+.success-gradient {
+  background: linear-gradient(90deg, hsla(134, 36%, 95%, 1) 0%, hsla(134, 36%, 90%, 1) 100%);
+}
+
+.nav-menu {
+  gap: 1rem;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #3a9e5f, #65c89b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.multi-color-border {
+  border-top: 3px solid #3a9e5f;
+  border-bottom: 3px solid #65c89b;
+  border-left: 3px solid #3a9e5f;
+  border-right: 3px solid #65c89b;
+}
+
+.shadow-subtle {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }

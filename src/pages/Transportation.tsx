@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Truck, TrendingUp, MapPin, Calendar, Clock, Route, ArrowRight, Package, AlertCircle } from "lucide-react";
+import { Truck, TrendingUp, MapPin, Calendar, Clock, Route, ArrowRight, Package, AlertCircle, Leaf, Zap } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ChatBot from "../components/ChatBot";
@@ -8,10 +8,40 @@ import ChatBot from "../components/ChatBot";
 const Transportation = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("tracking");
-
+  const [cropType, setCropType] = useState("");
+  const [cropVariety, setCropVariety] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [pesticidesUsed, setPesticidesUsed] = useState([]);
+  const [destination, setDestination] = useState("");
+  const [distance, setDistance] = useState("");
+  
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  const handleAddPesticide = (pesticide) => {
+    if (pesticide && !pesticidesUsed.includes(pesticide)) {
+      setPesticidesUsed([...pesticidesUsed, pesticide]);
+    }
+  };
+
+  const handleRemovePesticide = (index) => {
+    const newPesticides = [...pesticidesUsed];
+    newPesticides.splice(index, 1);
+    setPesticidesUsed(newPesticides);
+  };
+
+  const analyzeCropTransport = () => {
+    // This would be replaced by an actual API call in a real application
+    console.log("Analyzing crop for transport:", {
+      cropType,
+      cropVariety,
+      quantity,
+      pesticidesUsed,
+      destination,
+      distance
+    });
+  };
 
   const shipmentData = [
     {
@@ -85,8 +115,13 @@ const Transportation = () => {
     }
   ];
   
+  const pesticideOptions = [
+    "Cypermethrin", "Chlorpyrifos", "Imidacloprid", "Glyphosate", 
+    "Mancozeb", "Carbendazim", "Profenofos", "Organic Neem Extract"
+  ];
+  
   // Simple status color mapper
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "Delivered":
         return "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400";
@@ -104,13 +139,13 @@ const Transportation = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-primary/5 to-background">
+      <section className="pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-primary/5 to-background hero-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
             <div className="inline-block px-3 py-1 mb-4 text-sm font-medium rounded-full bg-primary/10 text-primary">
               Smart Transportation
             </div>
-            <h1 className="text-4xl md:text-5xl font-medium mb-4 text-balance">
+            <h1 className="text-4xl md:text-5xl font-medium mb-4 text-balance text-gradient">
               Efficient & Reliable Crop Transportation
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8 text-lg">
@@ -155,6 +190,16 @@ const Transportation = () => {
             >
               Route Optimization
             </button>
+            <button
+              onClick={() => setActiveTab("cropTransport")}
+              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                activeTab === "cropTransport" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              Crop Transport Analysis
+            </button>
           </div>
         </div>
       </section>
@@ -173,7 +218,7 @@ const Transportation = () => {
                   and current status to ensure your produce reaches its destination safely.
                 </p>
 
-                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-8">
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-8 card-gradient">
                   <h3 className="text-xl font-medium mb-4">Track Your Shipment</h3>
                   <div className="flex flex-col md:flex-row gap-4">
                     <input
@@ -181,7 +226,7 @@ const Transportation = () => {
                       placeholder="Enter tracking ID (e.g., AGRI78945612)"
                       className="flex-grow py-3 px-4 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     />
-                    <button className="py-3 px-6 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                    <button className="py-3 px-6 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
                       Track Now
                     </button>
                   </div>
@@ -190,7 +235,7 @@ const Transportation = () => {
                 <h3 className="text-xl font-medium mb-4">Your Recent Shipments</h3>
                 <div className="space-y-6">
                   {shipmentData.map((shipment) => (
-                    <div key={shipment.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                    <div key={shipment.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover-lift">
                       <div className="grid md:grid-cols-4">
                         {/* Left section with image */}
                         <div className="md:col-span-1 h-40 md:h-auto">
@@ -294,7 +339,7 @@ const Transportation = () => {
                   Choose from different vehicle types based on your specific requirements.
                 </p>
 
-                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-12">
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-12 card-gradient">
                   <h3 className="text-xl font-medium mb-6">Transport Booking Form</h3>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
@@ -314,6 +359,8 @@ const Transportation = () => {
                         <input
                           type="text"
                           placeholder="Enter delivery location"
+                          value={destination}
+                          onChange={(e) => setDestination(e.target.value)}
                           className="w-full py-2 pl-10 pr-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -325,14 +372,18 @@ const Transportation = () => {
                     <div>
                       <label className="block text-sm font-medium mb-2">Crop Type</label>
                       <select
+                        value={cropType}
+                        onChange={(e) => setCropType(e.target.value)}
                         className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       >
                         <option value="">Select crop type</option>
-                        <option value="wheat">Wheat</option>
-                        <option value="rice">Rice</option>
-                        <option value="fruits">Fruits</option>
-                        <option value="vegetables">Vegetables</option>
+                        <option value="grains">Grains</option>
+                        <option value="cereals">Cereals</option>
                         <option value="pulses">Pulses</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="flowers">Flowers</option>
+                        <option value="spices">Spices</option>
                       </select>
                     </div>
                     <div>
@@ -340,6 +391,8 @@ const Transportation = () => {
                       <input
                         type="number"
                         placeholder="Enter quantity"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
                         className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       />
                     </div>
@@ -380,7 +433,7 @@ const Transportation = () => {
                   </div>
 
                   <div className="mt-8 flex justify-center">
-                    <button className="px-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                    <button className="px-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
                       Find Transport Partners
                     </button>
                   </div>
@@ -389,7 +442,7 @@ const Transportation = () => {
                 <h3 className="text-xl font-medium mb-6">Verified Logistics Partners</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {transportPartners.map((partner) => (
-                    <div key={partner.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all">
+                    <div key={partner.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all hover-lift">
                       <div className="h-40 overflow-hidden">
                         <img 
                           src={partner.image} 
@@ -447,7 +500,7 @@ const Transportation = () => {
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-8 mb-12">
-                  <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                  <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm card-gradient">
                     <div className="p-6">
                       <h3 className="text-xl font-medium mb-4">Route Planner</h3>
                       
@@ -510,7 +563,7 @@ const Transportation = () => {
                         </div>
                       </div>
                       
-                      <button className="w-full py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                      <button className="w-full py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
                         <Route className="inline-block mr-2 h-5 w-5" />
                         Calculate Optimal Route
                       </button>
@@ -529,20 +582,221 @@ const Transportation = () => {
                   </div>
                 </div>
 
-                <div className="bg-primary/5 rounded-xl p-6 md:p-8">
+                <div className="bg-primary/5 rounded-xl p-6 md:p-8 success-gradient">
                   <h3 className="text-xl font-medium mb-4">Benefits of Route Optimization</h3>
                   <div className="grid md:grid-cols-3 gap-6">
-                    <div className="bg-card rounded-lg p-5 border border-border">
+                    <div className="bg-card rounded-lg p-5 border border-border hover-lift">
                       <h4 className="text-lg font-medium mb-2">Reduced Fuel Costs</h4>
                       <p className="text-muted-foreground">Save up to 20% on fuel expenses with optimized routes that avoid traffic and unnecessary detours.</p>
                     </div>
-                    <div className="bg-card rounded-lg p-5 border border-border">
+                    <div className="bg-card rounded-lg p-5 border border-border hover-lift">
                       <h4 className="text-lg font-medium mb-2">Faster Deliveries</h4>
                       <p className="text-muted-foreground">Reduce transportation time by up to 30% with real-time traffic data and alternative route suggestions.</p>
                     </div>
-                    <div className="bg-card rounded-lg p-5 border border-border">
+                    <div className="bg-card rounded-lg p-5 border border-border hover-lift">
                       <h4 className="text-lg font-medium mb-2">Less Produce Damage</h4>
                       <p className="text-muted-foreground">Better routes mean less time in transit and better road conditions, reducing damage to sensitive crops.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Crop Transport Analysis Tab */}
+          {activeTab === "cropTransport" && (
+            <div className="animate-fade-in">
+              <div className="mb-10">
+                <h2 className="text-2xl md:text-3xl font-medium mb-6">Crop Transport Analysis</h2>
+                <p className="text-muted-foreground mb-8">
+                  Our AI system analyzes your crop details to recommend the most appropriate transportation 
+                  methods and conditions to ensure quality preservation during transit.
+                </p>
+
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-8 card-gradient">
+                  <h3 className="text-xl font-medium mb-6">Enter Crop Details for Transport Analysis</h3>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Crop Type</label>
+                      <select
+                        value={cropType}
+                        onChange={(e) => setCropType(e.target.value)}
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      >
+                        <option value="">Select crop type</option>
+                        <option value="grains">Grains</option>
+                        <option value="cereals">Cereals</option>
+                        <option value="pulses">Pulses</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="flowers">Flowers</option>
+                        <option value="spices">Spices</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Crop Variety/Name</label>
+                      <input
+                        type="text"
+                        value={cropVariety}
+                        onChange={(e) => setCropVariety(e.target.value)}
+                        placeholder="E.g. Basmati Rice, Alphonso Mango"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Quantity (tonnes)</label>
+                      <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        placeholder="Enter quantity"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Transportation Distance (km)</label>
+                      <input
+                        type="number"
+                        value={distance}
+                        onChange={(e) => setDistance(e.target.value)}
+                        placeholder="Approximate distance"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium mb-2">Pesticides Used (if any)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {pesticidesUsed.map((pesticide, index) => (
+                        <div key={index} className="bg-muted px-3 py-1 rounded-lg flex items-center">
+                          <span className="text-sm">{pesticide}</span>
+                          <button 
+                            onClick={() => handleRemovePesticide(index)}
+                            className="ml-2 text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        className="flex-grow py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        onChange={(e) => e.target.value && handleAddPesticide(e.target.value)}
+                        value=""
+                      >
+                        <option value="">Select pesticide</option>
+                        {pesticideOptions.map((option, index) => (
+                          <option key={index} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={() => document.querySelector('select[value=""]') && handleAddPesticide(document.querySelector('select[value=""]').value)}
+                        className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex justify-center">
+                    <button 
+                      onClick={analyzeCropTransport}
+                      className="px-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift"
+                    >
+                      <Zap className="inline-block mr-2 h-5 w-5" />
+                      Analyze Transport Requirements
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift success-gradient">
+                    <h3 className="text-lg font-medium mb-4">Recommended Transport Vehicles</h3>
+                    <div className="space-y-4">
+                      <div className="bg-white/70 dark:bg-card rounded-lg p-4 border border-border/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium">Refrigerated Truck</h4>
+                          <span className="text-sm bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">Best for Fruits</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Maintains optimal temperature (2-8°C) and humidity (85-95%) levels for preserving freshness.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Capacity:</span>
+                            <span className="ml-1">1-10 tonnes</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Cost:</span>
+                            <span className="ml-1">₹25-35/km</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white/70 dark:bg-card rounded-lg p-4 border border-border/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium">Insulated Van</h4>
+                          <span className="text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full">Best for Vegetables</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Maintains moderate temperature control with good ventilation for crops that don't need refrigeration.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Capacity:</span>
+                            <span className="ml-1">0.5-3 tonnes</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Cost:</span>
+                            <span className="ml-1">₹18-25/km</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift success-gradient">
+                    <h3 className="text-lg font-medium mb-4">Transport Conditions Guide</h3>
+                    <div className="space-y-4">
+                      <div className="border-l-4 border-primary pl-4 py-2">
+                        <h4 className="font-medium mb-1">Temperature Control</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {cropType === "fruits" ? "Maintain 2-8°C for most fruits to prevent ripening and decay." :
+                           cropType === "vegetables" ? "Keep between 4-12°C depending on the vegetable type." :
+                           "Ensure stable temperature without extreme fluctuations."}
+                        </p>
+                      </div>
+                      
+                      <div className="border-l-4 border-primary pl-4 py-2">
+                        <h4 className="font-medium mb-1">Ventilation Requirements</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {cropType === "fruits" || cropType === "vegetables" ?
+                           "Proper air circulation prevents ethylene buildup and reduces spoilage. Ensure vents are clean and unobstructed." :
+                           "Basic ventilation to prevent moisture accumulation and mold growth."}
+                        </p>
+                      </div>
+                      
+                      <div className="border-l-4 border-primary pl-4 py-2">
+                        <h4 className="font-medium mb-1">Stacking & Packaging</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {cropType === "fruits" ? "Use cushioned crates with proper separation to prevent bruising." :
+                           cropType === "vegetables" ? "Stack in ventilated crates with proper weight distribution." :
+                           cropType === "grains" || cropType === "cereals" ? "Use moisture-resistant bags with secure sealing." :
+                           "Use appropriate packaging based on crop sensitivity and duration."}
+                        </p>
+                      </div>
+                      
+                      <div className="border-l-4 border-primary pl-4 py-2">
+                        <h4 className="font-medium mb-1">Transit Duration Impact</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {distance && (parseInt(distance) > 300 ? 
+                            "Long-distance transport requires more stringent temperature control and possible mid-transit inspections." :
+                            "Short distance allows for more flexible transport options but still requires proper handling.")}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

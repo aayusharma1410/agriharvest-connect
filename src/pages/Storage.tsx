@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight } from "lucide-react";
+import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ChatBot from "../components/ChatBot";
@@ -9,11 +9,44 @@ const Storage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("recommendations");
   const [cropType, setCropType] = useState("");
+  const [cropVariety, setCropVariety] = useState("");
   const [location, setLocation] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [pesticidesUsed, setPesticidesUsed] = useState([]);
+  const [harvestDate, setHarvestDate] = useState("");
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  const handleAddPesticide = (pesticide) => {
+    if (pesticide && !pesticidesUsed.includes(pesticide)) {
+      setPesticidesUsed([...pesticidesUsed, pesticide]);
+    }
+  };
+
+  const handleRemovePesticide = (index) => {
+    const newPesticides = [...pesticidesUsed];
+    newPesticides.splice(index, 1);
+    setPesticidesUsed(newPesticides);
+  };
+
+  const analyzeCrop = () => {
+    // Simulating AI analysis based on inputs
+    const result = {
+      recommendedStorageType: cropType === "fruits" || cropType === "vegetables" ? "Cold Storage" : "Dry Warehouse",
+      temperatureRange: cropType === "fruits" ? "2-4°C" : cropType === "vegetables" ? "5-10°C" : "15-25°C",
+      humidityRange: cropType === "fruits" || cropType === "vegetables" ? "85-95%" : "50-70%",
+      transportationMethod: quantity > 5000 ? "Refrigerated Truck" : "Standard Truck",
+      storageWarnings: pesticidesUsed.length > 2 ? "High pesticide concentration detected - special ventilation required" : null,
+      estimatedShelfLife: cropType === "fruits" ? "2-4 weeks" : cropType === "vegetables" ? "1-3 weeks" : "3-6 months"
+    };
+    
+    setAnalysisResult(result);
+    setShowAnalysis(true);
+  };
 
   const storageOptions = [
     {
@@ -26,6 +59,7 @@ const Storage = () => {
       priceRange: "₹5-7 per kg/month",
       image: "/placeholder.svg",
       rating: 4.7,
+      cropTypes: ["fruits", "vegetables"]
     },
     {
       id: 2,
@@ -37,6 +71,7 @@ const Storage = () => {
       priceRange: "₹6-8 per kg/month",
       image: "/placeholder.svg",
       rating: 4.5,
+      cropTypes: ["fruits", "dairy"]
     },
     {
       id: 3,
@@ -48,6 +83,19 @@ const Storage = () => {
       priceRange: "₹4-6 per kg/month",
       image: "/placeholder.svg",
       rating: 4.2,
+      cropTypes: ["fruits", "vegetables", "flowers"]
+    },
+    {
+      id: 4,
+      name: "Bharat Grain Storage",
+      distance: "4.2 km",
+      temperature: "18-22°C",
+      humidity: "50-60%",
+      capacity: "65% available",
+      priceRange: "₹3-5 per kg/month",
+      image: "/placeholder.svg",
+      rating: 4.3,
+      cropTypes: ["grains", "cereals", "pulses"]
     }
   ];
 
@@ -78,18 +126,23 @@ const Storage = () => {
     }
   ];
 
+  const pesticideOptions = [
+    "Cypermethrin", "Chlorpyrifos", "Imidacloprid", "Glyphosate", 
+    "Mancozeb", "Carbendazim", "Profenofos", "Organic Neem Extract"
+  ];
+
   return (
     <div className={`min-h-screen flex flex-col transition-opacity duration-500 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-primary/5 to-background">
+      <section className="pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-primary/5 to-background hero-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
             <div className="inline-block px-3 py-1 mb-4 text-sm font-medium rounded-full bg-primary/10 text-primary">
               Storage Solutions
             </div>
-            <h1 className="text-4xl md:text-5xl font-medium mb-4 text-balance">
+            <h1 className="text-4xl md:text-5xl font-medium mb-4 text-balance text-gradient">
               Smart Storage for Longer Shelf Life
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8 text-lg">
@@ -134,6 +187,16 @@ const Storage = () => {
             >
               Processing Techniques
             </button>
+            <button
+              onClick={() => setActiveTab("analysis")}
+              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                activeTab === "analysis" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              Crop Analysis
+            </button>
           </div>
         </div>
       </section>
@@ -152,7 +215,7 @@ const Storage = () => {
                   Our AI system analyzes optimal temperature, humidity, and storage duration for maximum shelf life.
                 </p>
 
-                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient">
                   <h3 className="text-xl font-medium mb-4">Find Optimal Storage Conditions</h3>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
@@ -163,13 +226,24 @@ const Storage = () => {
                         className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       >
                         <option value="">Select crop type</option>
-                        <option value="wheat">Wheat</option>
-                        <option value="rice">Rice</option>
-                        <option value="potatoes">Potatoes</option>
-                        <option value="tomatoes">Tomatoes</option>
-                        <option value="onions">Onions</option>
-                        <option value="apples">Apples</option>
+                        <option value="grains">Grains</option>
+                        <option value="cereals">Cereals</option>
+                        <option value="pulses">Pulses</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="flowers">Flowers</option>
+                        <option value="spices">Spices</option>
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Crop Variety/Name</label>
+                      <input
+                        type="text"
+                        value={cropVariety}
+                        onChange={(e) => setCropVariety(e.target.value)}
+                        placeholder="E.g. Basmati Rice, Alphonso Mango"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Your Location</label>
@@ -184,6 +258,15 @@ const Storage = () => {
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Harvest Date</label>
+                      <input
+                        type="date"
+                        value={harvestDate}
+                        onChange={(e) => setHarvestDate(e.target.value)}
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
                   </div>
 
                   <div className="mt-4 grid md:grid-cols-3 gap-4">
@@ -191,6 +274,8 @@ const Storage = () => {
                       <label className="block text-sm font-medium mb-2">Quantity (kg)</label>
                       <input
                         type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
                         placeholder="Enter quantity"
                         className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       />
@@ -216,8 +301,46 @@ const Storage = () => {
                     </div>
                   </div>
 
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium mb-2">Pesticides Used (if any)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {pesticidesUsed.map((pesticide, index) => (
+                        <div key={index} className="bg-muted px-3 py-1 rounded-lg flex items-center">
+                          <span className="text-sm">{pesticide}</span>
+                          <button 
+                            onClick={() => handleRemovePesticide(index)}
+                            className="ml-2 text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        className="flex-grow py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        onChange={(e) => e.target.value && handleAddPesticide(e.target.value)}
+                        value=""
+                      >
+                        <option value="">Select pesticide</option>
+                        {pesticideOptions.map((option, index) => (
+                          <option key={index} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={() => document.querySelector('select').value && handleAddPesticide(document.querySelector('select').value)}
+                        className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="mt-6 flex justify-center">
-                    <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                    <button 
+                      onClick={analyzeCrop}
+                      className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift"
+                    >
                       <Search className="inline-block mr-2 h-5 w-5" />
                       Get Recommendations
                     </button>
@@ -230,7 +353,7 @@ const Storage = () => {
                 <h3 className="text-xl font-medium mb-4">Available Storage Options Near You</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {storageOptions.map((option) => (
-                    <div key={option.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all">
+                    <div key={option.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all hover-lift">
                       <div className="h-48 overflow-hidden">
                         <img 
                           src={option.image} 
@@ -269,6 +392,17 @@ const Storage = () => {
                           </div>
                         </div>
                         
+                        <div className="mb-3">
+                          <div className="text-xs text-muted-foreground mb-1">Suitable for:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {option.cropTypes.map((crop, index) => (
+                              <span key={index} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                {crop}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
                         <button className="w-full py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
                           View Details
                         </button>
@@ -296,7 +430,7 @@ const Storage = () => {
                 </div>
               </div>
 
-              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient">
                 <h3 className="text-xl font-medium mb-4">Search Filters</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
@@ -335,7 +469,7 @@ const Storage = () => {
                 </div>
 
                 <div className="mt-6 flex justify-center">
-                  <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                  <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
                     Apply Filters
                   </button>
                 </div>
@@ -354,7 +488,7 @@ const Storage = () => {
 
               <div className="grid md:grid-cols-2 gap-8 mb-12">
                 {processingTips.map((tip) => (
-                  <div key={tip.id} className="bg-card rounded-xl border border-border p-6 shadow-sm">
+                  <div key={tip.id} className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift card-gradient">
                     <div className="flex items-start">
                       <div className="mr-4">{tip.icon}</div>
                       <div>
@@ -366,7 +500,7 @@ const Storage = () => {
                 ))}
               </div>
 
-              <div className="bg-primary/5 rounded-xl p-6 md:p-8">
+              <div className="bg-primary/5 rounded-xl p-6 md:p-8 success-gradient">
                 <h3 className="text-xl font-medium mb-4">Crop-Specific Processing Guides</h3>
                 <p className="text-muted-foreground mb-6">
                   Download our detailed guides for specific crops to learn about the optimal processing methods:
@@ -374,7 +508,7 @@ const Storage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {["Wheat & Grains", "Fruits & Vegetables", "Pulses & Lentils", "Oilseeds", "Spices"].map((crop, index) => (
-                    <div key={index} className="bg-card rounded-lg border border-border p-4 flex justify-between items-center">
+                    <div key={index} className="bg-card rounded-lg border border-border p-4 flex justify-between items-center hover-lift">
                       <span>{crop}</span>
                       <button className="text-primary hover:underline flex items-center">
                         <span className="mr-1">Download</span>
@@ -384,6 +518,211 @@ const Storage = () => {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Crop Analysis Tab */}
+          {activeTab === "analysis" && (
+            <div className="animate-fade-in">
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">AI-Powered Crop Analysis</h2>
+              <p className="text-muted-foreground mb-8">
+                Get detailed recommendations for storage and transportation based on your specific crop details.
+                Our AI system analyzes multiple factors to provide the most suitable solutions.
+              </p>
+
+              {!showAnalysis ? (
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient">
+                  <h3 className="text-xl font-medium mb-4">Enter Crop Details for Analysis</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Crop Type</label>
+                      <select
+                        value={cropType}
+                        onChange={(e) => setCropType(e.target.value)}
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      >
+                        <option value="">Select crop type</option>
+                        <option value="grains">Grains</option>
+                        <option value="cereals">Cereals</option>
+                        <option value="pulses">Pulses</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="flowers">Flowers</option>
+                        <option value="spices">Spices</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Crop Variety/Name</label>
+                      <input
+                        type="text"
+                        value={cropVariety}
+                        onChange={(e) => setCropVariety(e.target.value)}
+                        placeholder="E.g. Basmati Rice, Alphonso Mango"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Quantity (kg)</label>
+                      <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        placeholder="Enter quantity"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Harvest Date</label>
+                      <input
+                        type="date"
+                        value={harvestDate}
+                        onChange={(e) => setHarvestDate(e.target.value)}
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium mb-2">Pesticides Used (if any)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {pesticidesUsed.map((pesticide, index) => (
+                        <div key={index} className="bg-muted px-3 py-1 rounded-lg flex items-center">
+                          <span className="text-sm">{pesticide}</span>
+                          <button 
+                            onClick={() => handleRemovePesticide(index)}
+                            className="ml-2 text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        className="flex-grow py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        onChange={(e) => e.target.value && handleAddPesticide(e.target.value)}
+                        value=""
+                      >
+                        <option value="">Select pesticide</option>
+                        {pesticideOptions.map((option, index) => (
+                          <option key={index} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={() => document.querySelector('select[value=""]') && handleAddPesticide(document.querySelector('select[value=""]').value)}
+                        className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex justify-center">
+                    <button 
+                      onClick={analyzeCrop}
+                      className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift"
+                    >
+                      <Zap className="inline-block mr-2 h-5 w-5" />
+                      Analyze Crop
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm success-gradient">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-xl font-medium mb-6">Analysis Results for {cropVariety || cropType}</h3>
+                      <button 
+                        onClick={() => setShowAnalysis(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Back to Analysis
+                      </button>
+                    </div>
+                    
+                    {analysisResult?.storageWarnings && (
+                      <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-lg flex items-start">
+                        <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                        <p>{analysisResult.storageWarnings}</p>
+                      </div>
+                    )}
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-card rounded-lg border border-border p-5">
+                        <h4 className="text-lg font-medium mb-4">Storage Recommendations</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Recommended Storage Type:</span>
+                            <span className="font-medium">{analysisResult?.recommendedStorageType}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Temperature Range:</span>
+                            <span className="font-medium">{analysisResult?.temperatureRange}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Humidity Range:</span>
+                            <span className="font-medium">{analysisResult?.humidityRange}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Estimated Shelf Life:</span>
+                            <span className="font-medium">{analysisResult?.estimatedShelfLife}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-card rounded-lg border border-border p-5">
+                        <h4 className="text-lg font-medium mb-4">Transportation Recommendations</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Recommended Vehicle:</span>
+                            <span className="font-medium">{analysisResult?.transportationMethod}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Additional Requirements:</span>
+                            <span className="font-medium">
+                              {cropType === "fruits" || cropType === "vegetables" 
+                                ? "Temperature-controlled environment" 
+                                : "Standard protection from elements"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Loading Precautions:</span>
+                            <span className="font-medium">
+                              {cropType === "fruits" 
+                                ? "Handle with care, avoid stacking" 
+                                : cropType === "vegetables" 
+                                ? "Proper ventilation required"
+                                : "Standard loading procedures"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6">
+                      <h4 className="text-lg font-medium mb-4">Nearby Storage Facilities Matching Your Requirements</h4>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {storageOptions
+                          .filter(option => option.cropTypes.includes(cropType))
+                          .slice(0, 3)
+                          .map(option => (
+                            <div key={option.id} className="bg-card rounded-lg border border-border p-4 hover-lift">
+                              <h5 className="font-medium mb-1">{option.name}</h5>
+                              <div className="text-sm text-muted-foreground mb-2">{option.distance} away</div>
+                              <div className="flex justify-between text-sm">
+                                <span>{option.temperature}</span>
+                                <span>{option.capacity}</span>
+                              </div>
+                              <button className="w-full mt-3 py-1.5 text-sm bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
+                                Select
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
