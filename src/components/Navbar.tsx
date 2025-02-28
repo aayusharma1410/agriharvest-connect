@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, Languages } from "lucide-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [language, setLanguage] = useState<"english" | "hindi">("english");
   const location = useLocation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -23,6 +24,11 @@ const Navbar = () => {
     }
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === "english" ? "hindi" : "english");
+    localStorage.setItem('language', language === "english" ? "hindi" : "english");
+  };
+
   useEffect(() => {
     // Check for saved theme preference or use system preference
     const savedTheme = localStorage.getItem('theme');
@@ -31,6 +37,12 @@ const Navbar = () => {
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       document.documentElement.classList.add('dark');
       setIsDarkMode(true);
+    }
+
+    // Check for saved language preference
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage === 'hindi') {
+      setLanguage('hindi');
     }
 
     // Add scroll event listener
@@ -43,12 +55,12 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Storage", path: "/storage" },
-    { name: "Transportation", path: "/transportation" },
-    { name: "Crop Prediction", path: "/crop-prediction" },
-    { name: "Government Schemes", path: "/government-schemes" },
-    { name: "Contact", path: "/contact" }
+    { name: language === "english" ? "Home" : "होम", path: "/" },
+    { name: language === "english" ? "Storage" : "भंडारण", path: "/storage" },
+    { name: language === "english" ? "Transportation" : "परिवहन", path: "/transportation" },
+    { name: language === "english" ? "Crop Prediction" : "फसल भविष्यवाणी", path: "/crop-prediction" },
+    { name: language === "english" ? "Government Schemes" : "सरकारी योजनाएं", path: "/government-schemes" },
+    { name: language === "english" ? "Contact" : "संपर्क", path: "/contact" }
   ];
 
   return (
@@ -84,8 +96,23 @@ const Navbar = () => {
             ))}
           </nav>
 
-          {/* Theme Toggle Button and Mobile Menu Toggle */}
+          {/* Login, Theme Toggle Button and Mobile Menu Toggle */}
           <div className="flex items-center">
+            <Link 
+              to="/login" 
+              className="mr-2 text-foreground/80 hover:text-primary rounded-lg transition-colors px-3 py-2 hidden md:block"
+            >
+              {language === "english" ? "Login" : "लॉगिन"}
+            </Link>
+
+            <button
+              onClick={toggleLanguage}
+              className="p-2 mr-2 text-foreground/80 hover:text-primary rounded-full transition-colors"
+              aria-label="Toggle language"
+            >
+              <Languages size={20} />
+            </button>
+
             <button
               onClick={toggleDarkMode}
               className="p-2 mr-2 text-foreground/80 hover:text-primary rounded-full transition-colors"
@@ -128,6 +155,13 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
+            <Link
+              to="/login"
+              className="px-4 py-3 rounded-lg transition-colors hover:bg-primary/5 text-foreground/80"
+              onClick={closeMenu}
+            >
+              {language === "english" ? "Login" : "लॉगिन"}
+            </Link>
           </nav>
         </div>
       </div>

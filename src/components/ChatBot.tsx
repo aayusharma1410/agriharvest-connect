@@ -1,18 +1,52 @@
 
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, X, Mic, ChevronDown } from "lucide-react";
+import { MessageSquare, Send, X, Mic, ChevronDown, Languages } from "lucide-react";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{text: string; isUser: boolean}[]>([
-    { text: "Hello! I'm your AgriSarthi assistant. How can I help you today?", isUser: false }
-  ]);
+  const [messages, setMessages] = useState<{text: string; isUser: boolean}[]>([]);
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [language, setLanguage] = useState<"english" | "hindi">("english");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check for saved language preference
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage === 'hindi') {
+      setLanguage('hindi');
+    }
+    
+    // Set initial welcome message based on language
+    setMessages([
+      { 
+        text: language === "english" 
+          ? "Hello! I'm your AgriSarthi assistant. How can I help you today?" 
+          : "नमस्ते! मैं आपका AgriSarthi सहायक हूँ। आज मैं आपकी कैसे मदद कर सकता हूँ?", 
+        isUser: false 
+      }
+    ]);
+  }, [language]);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
+  };
+
+  const toggleLanguage = () => {
+    const newLanguage = language === "english" ? "hindi" : "english";
+    setLanguage(newLanguage);
+    localStorage.setItem('language', newLanguage);
+    
+    // Add a language change notification message
+    setMessages(prev => [
+      ...prev, 
+      { 
+        text: newLanguage === "english" 
+          ? "Switched to English" 
+          : "हिंदी में बदल दिया गया", 
+        isUser: false 
+      }
+    ]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,13 +59,25 @@ const ChatBot = () => {
 
       // Simulate bot response after a short delay
       setTimeout(() => {
-        const botResponses = [
-          "I can help you find the nearest storage facility for your crops.",
-          "Would you like to know about any specific government schemes for farmers?",
-          "I can assist you with transportation options for your harvest.",
-          "Do you need help with crop yield prediction?",
-          "You can upload your soil report for personalized recommendations."
-        ];
+        let botResponses;
+        
+        if (language === "english") {
+          botResponses = [
+            "I can help you find the nearest storage facility for your crops.",
+            "Would you like to know about any specific government schemes for farmers?",
+            "I can assist you with transportation options for your harvest.",
+            "Do you need help with crop yield prediction?",
+            "You can upload your soil report for personalized recommendations."
+          ];
+        } else {
+          botResponses = [
+            "मैं आपकी फसलों के लिए निकटतम भंडारण सुविधा खोजने में आपकी मदद कर सकता हूँ।",
+            "क्या आप किसानों के लिए किसी विशेष सरकारी योजना के बारे में जानना चाहेंगे?",
+            "मैं आपकी फसल के परिवहन विकल्पों के साथ आपकी सहायता कर सकता हूँ।",
+            "क्या आपको फसल उपज भविष्यवाणी के साथ मदद की आवश्यकता है?",
+            "आप व्यक्तिगत सिफारिशों के लिए अपनी मिट्टी की रिपोर्ट अपलोड कर सकते हैं।"
+          ];
+        }
         
         const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
         setMessages(prev => [...prev, { text: randomResponse, isUser: false }]);
@@ -49,9 +95,13 @@ const ChatBot = () => {
       return;
     }
     
-    // Simulate voice recognition
+    // Simulate voice recognition with language-specific text
     setTimeout(() => {
-      setInput("How can I find the nearest cold storage?");
+      if (language === "english") {
+        setInput("How can I find the nearest cold storage?");
+      } else {
+        setInput("मैं निकटतम कोल्ड स्टोरेज कैसे खोज सकता हूँ?");
+      }
       setIsRecording(false);
     }, 2000);
   };
@@ -60,6 +110,10 @@ const ChatBot = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const placeholderText = language === "english" 
+    ? "Type your message..." 
+    : "अपना संदेश टाइप करें...";
 
   return (
     <>
@@ -84,11 +138,25 @@ const ChatBot = () => {
         <div className="bg-primary p-4 text-primary-foreground flex justify-between items-center">
           <div className="flex items-center">
             <MessageSquare size={20} className="mr-2" />
-            <h3 className="font-medium">AgriSarthi Assistant</h3>
+            <h3 className="font-medium">
+              {language === "english" ? "AgriSarthi Assistant" : "AgriSarthi सहायक"}
+            </h3>
           </div>
-          <button onClick={toggleChat} className="text-primary-foreground/80 hover:text-primary-foreground">
-            <ChevronDown size={20} />
-          </button>
+          <div className="flex items-center">
+            <button 
+              onClick={toggleLanguage}
+              className="text-primary-foreground/80 hover:text-primary-foreground mr-2"
+              aria-label="Toggle language"
+            >
+              <Languages size={18} />
+            </button>
+            <button 
+              onClick={toggleChat} 
+              className="text-primary-foreground/80 hover:text-primary-foreground"
+            >
+              <ChevronDown size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Chat messages */}
@@ -129,7 +197,7 @@ const ChatBot = () => {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder={placeholderText}
             className="flex-1 py-2 px-3 rounded-full bg-muted border border-border focus:outline-none focus:ring-1 focus:ring-primary"
           />
 
