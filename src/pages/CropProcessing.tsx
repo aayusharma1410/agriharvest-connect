@@ -1,150 +1,236 @@
 
 import { useState, useEffect } from "react";
-import { Microscope, Tag, TrendingUp, ShoppingCart, ArrowRight, Leaf, Image, BarChart, Send } from "lucide-react";
+import { Link } from "react-router-dom";
+import { 
+  Search, 
+  Filter, 
+  ArrowRight, 
+  User, 
+  Star, 
+  ChevronDown, 
+  ChevronUp,
+  MapPin as LocationIcon,
+  Clock as ClockIcon,
+  Zap as ZapIcon,
+  ThumbsUp,
+  BarChart
+} from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import ChatBot from "../components/ChatBot";
 
 const CropProcessing = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("techniques");
+  const [isLoaded, setIsLoaded] = useState(false);
   const [cropType, setCropType] = useState("");
-  const [processingType, setProcessingType] = useState("");
-  const [cropImage, setCropImage] = useState<File | null>(null);
-  const [cropImagePreview, setCropImagePreview] = useState<string | null>(null);
-  const [imageAnalysisResult, setImageAnalysisResult] = useState<any>(null);
+  const [language, setLanguage] = useState<"english" | "hindi">("english");
+  const [expandedFaqs, setExpandedFaqs] = useState<number[]>([]);
 
   useEffect(() => {
     setIsLoaded(true);
+    
+    // Check for saved language preference
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage === 'hindi') {
+      setLanguage('hindi');
+    }
+
+    // Add language change listener
+    const handleLanguageChange = (e: any) => {
+      if (e.detail && e.detail.language) {
+        setLanguage(e.detail.language);
+      }
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => {
+      window.removeEventListener('languageChange', handleLanguageChange);
+    };
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCropImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCropImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  // Toggle FAQ item
+  const toggleFaq = (id: number) => {
+    if (expandedFaqs.includes(id)) {
+      setExpandedFaqs(expandedFaqs.filter(item => item !== id));
+    } else {
+      setExpandedFaqs([...expandedFaqs, id]);
     }
   };
 
-  const analyzeImage = () => {
-    // Mock image analysis result
-    setImageAnalysisResult({
-      quality: "Premium Grade",
-      defects: "None detected",
-      size: "Large",
-      estimatedMarketValue: "₹55-60 per kg",
-      recommendations: "Suitable for export markets"
-    });
+  // Multilingual content
+  const content = {
+    english: {
+      pageTitle: "Crop Processing",
+      heroSubtitle: "Maximize value and minimize waste with modern processing techniques",
+      searchPlaceholder: "Search processing techniques, equipment...",
+      tabTechniques: "Processing Techniques",
+      tabGrading: "Grading & Sorting",
+      tabValueAddition: "Value Addition",
+      tabMarketLinkage: "Market Linkage",
+      selectCropType: "Select crop type",
+      wheat: "Wheat",
+      rice: "Rice",
+      maize: "Maize",
+      pulses: "Pulses",
+      oilseeds: "Oilseeds",
+      vegetables: "Vegetables",
+      fruits: "Fruits",
+      searchButton: "Search",
+      sharingTitle: "Processing Equipment Sharing",
+      sharingSubtitle: "Share equipment with neighboring farmers and reduce costs",
+      viewRequests: "View Requests",
+      offerEquipment: "Offer Equipment",
+      faqTitle: "Frequently Asked Questions",
+      faqSeeMore: "See more",
+      faqSeeLess: "See less",
+      viewAll: "View All",
+      successStories: "Success Stories",
+      kmAway: "km away",
+      capacity: "Capacity",
+      available: "Available",
+      unavailable: "Unavailable",
+      contactNow: "Contact Now",
+      viewDetails: "View Details"
+    },
+    hindi: {
+      pageTitle: "फसल प्रसंस्करण",
+      heroSubtitle: "आधुनिक प्रसंस्करण तकनीकों के साथ मूल्य अधिकतम करें और अपशिष्ट को कम करें",
+      searchPlaceholder: "प्रसंस्करण तकनीक, उपकरण खोजें...",
+      tabTechniques: "प्रसंस्करण तकनीक",
+      tabGrading: "ग्रेडिंग और छंटाई",
+      tabValueAddition: "मूल्य संवर्धन",
+      tabMarketLinkage: "बाजार संपर्क",
+      selectCropType: "फसल प्रकार चुनें",
+      wheat: "गेहूं",
+      rice: "चावल",
+      maize: "मक्का",
+      pulses: "दालें",
+      oilseeds: "तिलहन",
+      vegetables: "सब्जियां",
+      fruits: "फल",
+      searchButton: "खोजें",
+      sharingTitle: "प्रसंस्करण उपकरण साझाकरण",
+      sharingSubtitle: "पड़ोसी किसानों के साथ उपकरण साझा करें और लागत कम करें",
+      viewRequests: "अनुरोध देखें",
+      offerEquipment: "उपकरण की पेशकश करें",
+      faqTitle: "अक्सर पूछे जाने वाले प्रश्न",
+      faqSeeMore: "और देखें",
+      faqSeeLess: "कम देखें",
+      viewAll: "सभी देखें",
+      successStories: "सफलता की कहानियां",
+      kmAway: "किमी दूर",
+      capacity: "क्षमता",
+      available: "उपलब्ध",
+      unavailable: "अनुपलब्ध",
+      contactNow: "अभी संपर्क करें",
+      viewDetails: "विवरण देखें"
+    }
   };
 
+  // Set the current language content
+  const t = language === "english" ? content.english : content.hindi;
+
+  // Processing Techniques Data
   const processingTechniques = [
     {
       id: 1,
-      title: "Crop Drying",
-      description: "Reduce moisture content to prevent mold and bacterial growth during storage.",
-      steps: ["Clean the crop thoroughly", "Spread evenly on a clean surface", "Ensure good air circulation", "Store when moisture content is below 12%"],
-      crops: ["Grains", "Pulses", "Spices"]
+      title: language === "english" ? "Wheat Threshing & Milling" : "गेहूं थ्रेशिंग और मिलिंग",
+      description: language === "english" 
+        ? "Modern techniques for separating grains and converting to flour with minimal waste" 
+        : "न्यूनतम अपशिष्ट के साथ अनाज को अलग करने और आटे में परिवर्तित करने के लिए आधुनिक तकनीकें",
+      image: "/placeholder.svg",
+      equipmentNeeded: language === "english" ? "Thresher, Flour Mill" : "थ्रेशर, आटा चक्की",
+      averageCost: "₹2-3 per kg",
+      yieldImprovement: "15-20%"
     },
     {
       id: 2,
-      title: "Washing & Cleaning",
-      description: "Remove dirt, pesticides, and contaminants to improve quality and safety.",
-      steps: ["Use clean potable water", "Add sanitizer if needed", "Rinse thoroughly", "Dry properly before packaging"],
-      crops: ["Fruits", "Vegetables", "Root crops"]
+      title: language === "english" ? "Fruit Pulping & Juicing" : "फल पल्पिंग और जूसिंग",
+      description: language === "english"
+        ? "Extract juices and pulp from fruits to extend shelf life and create value-added products" 
+        : "शेल्फ लाइफ बढ़ाने और मूल्य वर्धित उत्पाद बनाने के लिए फलों से रस और गूदा निकालें",
+      image: "/placeholder.svg",
+      equipmentNeeded: language === "english" ? "Pulper, Juicer, Pasteurizer" : "पल्पर, जूसर, पाश्चुराइज़र",
+      averageCost: "₹5-8 per kg",
+      yieldImprovement: "25-30%"
     },
     {
       id: 3,
-      title: "Milling & Grinding",
-      description: "Convert grains and spices into flour or powder for value addition.",
-      steps: ["Clean the crop thoroughly", "Adjust mill settings for desired texture", "Sieve after grinding for uniformity", "Package immediately after processing"],
-      crops: ["Wheat", "Rice", "Maize", "Spices"]
-    },
-    {
-      id: 4,
-      title: "Packaging",
-      description: "Protect processed crops from contamination and extend shelf life.",
-      steps: ["Select appropriate packaging material", "Ensure product is completely cool before packaging", "Label with production and expiry dates", "Store in a cool, dry place"],
-      crops: ["All processed foods"]
+      title: language === "english" ? "Spice Grinding & Packaging" : "मसाला पीसना और पैकेजिंग",
+      description: language === "english"
+        ? "Clean, dry, grind and package spices to preserve aroma and increase market value" 
+        : "सुगंध को संरक्षित करने और बाजार मूल्य बढ़ाने के लिए मसालों को साफ, सूखा, पीसना और पैकेज करना",
+      image: "/placeholder.svg",
+      equipmentNeeded: language === "english" ? "Dryer, Grinder, Packaging Machine" : "ड्रायर, ग्राइंडर, पैकेजिंग मशीन",
+      averageCost: "₹10-15 per kg",
+      yieldImprovement: "40-50%"
     }
   ];
 
-  const valueAdditionMethods = [
+  // Shared Equipment Offers
+  const sharedEquipment = [
     {
       id: 1,
-      title: "Wheat to Flour Processing",
-      rawCrop: "Wheat",
-      processedProduct: "Wheat Flour, Semolina, Wheat Germ",
-      valueIncrement: "30-45%",
-      investmentRequired: "Medium",
-      difficulty: "Low to Medium",
-      popularity: "High"
+      name: language === "english" ? "Rice Huller Machine" : "चावल हलर मशीन",
+      owner: language === "english" ? "Rajesh Kumar" : "राजेश कुमार",
+      location: language === "english" ? "Bhopal, MP" : "भोपाल, एमपी",
+      distance: "5.2",
+      rate: "₹200/hour",
+      capacity: language === "english" ? "50kg/hour" : "50 किग्रा/घंटा",
+      available: true,
+      image: "/placeholder.svg"
     },
     {
       id: 2,
-      title: "Tomato Processing",
-      rawCrop: "Tomatoes",
-      processedProduct: "Puree, Ketchup, Dried Tomatoes, Tomato Paste",
-      valueIncrement: "80-120%",
-      investmentRequired: "Medium to High",
-      difficulty: "Medium",
-      popularity: "High"
+      name: language === "english" ? "Industrial Food Dehydrator" : "औद्योगिक फूड डिहाइड्रेटर",
+      owner: language === "english" ? "Anita Singh" : "अनीता सिंह",
+      location: language === "english" ? "Indore, MP" : "इंदौर, एमपी",
+      distance: "8.7",
+      rate: "₹350/hour",
+      capacity: language === "english" ? "25kg/batch" : "25 किग्रा/बैच",
+      available: true,
+      image: "/placeholder.svg"
     },
     {
       id: 3,
-      title: "Fruit Preservation",
-      rawCrop: "Mangoes, Apples, Berries",
-      processedProduct: "Jams, Jellies, Dried Fruits, Fruit Juices",
-      valueIncrement: "70-150%",
-      investmentRequired: "Low to Medium",
-      difficulty: "Low to Medium",
-      popularity: "High"
-    },
-    {
-      id: 4,
-      title: "Pulse Processing",
-      rawCrop: "Chickpeas, Lentils, Beans",
-      processedProduct: "Split Pulses, Flour, Ready-to-Cook Mixes",
-      valueIncrement: "25-50%",
-      investmentRequired: "Low to Medium",
-      difficulty: "Low",
-      popularity: "Medium"
+      name: language === "english" ? "Oil Press Machine" : "तेल निकालने की मशीन",
+      owner: language === "english" ? "Mahesh Patel" : "महेश पटेल",
+      location: language === "english" ? "Ujjain, MP" : "उज्जैन, एमपी",
+      distance: "12.3",
+      rate: "₹250/hour",
+      capacity: language === "english" ? "30kg/hour" : "30 किग्रा/घंटा",
+      available: false,
+      image: "/placeholder.svg"
     }
   ];
 
-  const marketLinkages = [
+  // FAQs
+  const faqs = [
     {
       id: 1,
-      buyerName: "FreshExport Ltd.",
-      cropType: "Fruits & Vegetables",
-      requirements: "Premium grade, Organic certification preferred",
-      priceRange: "10-15% above market rate",
-      quantityNeeded: "500-1000 kg weekly",
-      location: "Delhi/NCR",
-      contactInfo: "freshexport@example.com"
+      question: language === "english" 
+        ? "What is the best way to process tomatoes for longer shelf life?" 
+        : "लंबे शेल्फ जीवन के लिए टमाटर को संसाधित करने का सबसे अच्छा तरीका क्या है?",
+      answer: language === "english"
+        ? "For longer shelf life, consider sun-drying, making puree or sauce, or freezing them in portions. Each method preserves the nutritional value and flavor differently."
+        : "लंबे शेल्फ जीवन के लिए, सूर्य-सुखाना, प्यूरी या सॉस बनाना, या उन्हें हिस्सों में फ्रीज करना विचार करें। प्रत्येक विधि पोषण मूल्य और स्वाद को अलग तरह से संरक्षित करती है।"
     },
     {
       id: 2,
-      buyerName: "JaiKisan Foods",
-      cropType: "Grains & Pulses",
-      requirements: "Standard quality, Moisture content <12%",
-      priceRange: "Market rate + ₹2/kg",
-      quantityNeeded: "2000-5000 kg monthly",
-      location: "Punjab & Haryana",
-      contactInfo: "procurement@jaikisan.com"
+      question: language === "english" 
+        ? "How can I set up a small-scale flour mill in my village?"
+        : "मैं अपने गांव में एक छोटे पैमाने पर आटा चक्की कैसे स्थापित कर सकता हूं?",
+      answer: language === "english"
+        ? "To set up a small-scale flour mill, you'll need a suitable location, processing equipment (mill, sifter, packaging unit), necessary licenses, and initial capital of about ₹2-5 lakhs. Government subsidies are available under various schemes."
+        : "एक छोटे पैमाने पर आटा चक्की स्थापित करने के लिए, आपको एक उपयुक्त स्थान, प्रसंस्करण उपकरण (मिल, छलनी, पैकेजिंग इकाई), आवश्यक लाइसेंस और लगभग ₹2-5 लाख की प्रारंभिक पूंजी की आवश्यकता होगी। विभिन्न योजनाओं के तहत सरकारी सब्सिडी उपलब्ध है।"
     },
     {
       id: 3,
-      buyerName: "Organic Valley",
-      cropType: "All Certified Organic Crops",
-      requirements: "Organic certification mandatory, No chemical treatments",
-      priceRange: "30-50% premium over conventional",
-      quantityNeeded: "Variable based on crop",
-      location: "Pan India",
-      contactInfo: "buyorg@organicvalley.in"
+      question: language === "english" 
+        ? "What are the minimum requirements for organic certification of processed foods?"
+        : "प्रसंस्कृत खाद्य पदार्थों के जैविक प्रमाणन के लिए न्यूनतम आवश्यकताएं क्या हैं?",
+      answer: language === "english"
+        ? "For organic certification of processed foods, you need to ensure all ingredients are certified organic, maintain proper separation from non-organic products, use approved processing methods and additives, and undergo regular inspections by accredited certification bodies."
+        : "प्रसंस्कृत खाद्य पदार्थों के जैविक प्रमाणन के लिए, आपको यह सुनिश्चित करना होगा कि सभी सामग्री प्रमाणित जैविक है, गैर-जैविक उत्पादों से उचित अलगाव बनाए रखें, अनुमोदित प्रसंस्करण विधियों और योजकों का उपयोग करें, और मान्यता प्राप्त प्रमाणन निकायों द्वारा नियमित निरीक्षण से गुजरें।"
     }
   ];
 
@@ -153,19 +239,33 @@ const CropProcessing = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-primary/5 to-background hero-gradient">
+      <section className="pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-primary/5 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
             <div className="inline-block px-3 py-1 mb-4 text-sm font-medium rounded-full bg-primary/10 text-primary">
-              Crop Processing
+              {t.pageTitle}
             </div>
-            <h1 className="text-4xl md:text-5xl font-medium mb-4 text-balance text-gradient">
-              Transform Your Crops, Maximize Value
+            <h1 className="text-4xl md:text-5xl font-medium mb-4 text-balance">
+              {t.pageTitle}
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8 text-lg">
-              Learn advanced processing techniques, grading methods, and value addition
-              strategies to increase your farm income and reduce post-harvest losses.
+              {t.heroSubtitle}
             </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={t.searchPlaceholder}
+                  className="w-full pl-10 pr-20 py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-4 py-1.5 rounded-md font-medium text-sm">
+                  {t.searchButton}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -182,7 +282,7 @@ const CropProcessing = () => {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              Processing Techniques
+              {t.tabTechniques}
             </button>
             <button
               onClick={() => setActiveTab("grading")}
@@ -192,7 +292,7 @@ const CropProcessing = () => {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              Grading & Sorting
+              {t.tabGrading}
             </button>
             <button
               onClick={() => setActiveTab("valueAddition")}
@@ -202,7 +302,7 @@ const CropProcessing = () => {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              Value Addition Methods
+              {t.tabValueAddition}
             </button>
             <button
               onClick={() => setActiveTab("marketLinkage")}
@@ -212,7 +312,7 @@ const CropProcessing = () => {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              Market Linkage
+              {t.tabMarketLinkage}
             </button>
           </div>
         </div>
@@ -226,87 +326,186 @@ const CropProcessing = () => {
           {activeTab === "techniques" && (
             <div className="animate-fade-in">
               <div className="mb-10">
-                <h2 className="text-2xl md:text-3xl font-medium mb-6">Processing Techniques for Better Shelf Life</h2>
-                <p className="text-muted-foreground mb-8">
-                  Proper processing techniques help preserve crop quality, extend shelf life, and increase market value.
-                  Choose the right method based on your crop type and target market.
-                </p>
+                <h2 className="text-2xl md:text-3xl font-medium mb-6">{t.tabTechniques}</h2>
+                
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-10">
+                  <h3 className="text-xl font-medium mb-4">{t.selectCropType}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <select
+                      value={cropType}
+                      onChange={(e) => setCropType(e.target.value)}
+                      className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    >
+                      <option value="">{t.selectCropType}</option>
+                      <option value="wheat">{t.wheat}</option>
+                      <option value="rice">{t.rice}</option>
+                      <option value="maize">{t.maize}</option>
+                      <option value="pulses">{t.pulses}</option>
+                      <option value="oilseeds">{t.oilseeds}</option>
+                      <option value="vegetables">{t.vegetables}</option>
+                      <option value="fruits">{t.fruits}</option>
+                    </select>
 
-                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient mb-10">
-                  <h3 className="text-xl font-medium mb-4">Find Recommended Processing Methods</h3>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Crop Type</label>
-                      <select
-                        value={cropType}
-                        onChange={(e) => setCropType(e.target.value)}
-                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      >
-                        <option value="">Select crop type</option>
-                        <option value="grains">Grains</option>
-                        <option value="cereals">Cereals</option>
-                        <option value="pulses">Pulses</option>
-                        <option value="vegetables">Vegetables</option>
-                        <option value="fruits">Fruits</option>
-                        <option value="spices">Spices</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Processing Type</label>
-                      <select
-                        value={processingType}
-                        onChange={(e) => setProcessingType(e.target.value)}
-                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      >
-                        <option value="">Select processing type</option>
-                        <option value="drying">Drying</option>
-                        <option value="cleaning">Washing & Cleaning</option>
-                        <option value="milling">Milling & Grinding</option>
-                        <option value="packaging">Packaging</option>
-                        <option value="preservation">Preservation</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex justify-center">
-                    <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
-                      <Microscope className="inline-block mr-2 h-5 w-5" />
-                      Get Processing Recommendations
+                    <button className="bg-primary text-primary-foreground font-medium px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors md:col-span-1">
+                      <Filter className="inline-block mr-2 h-4 w-4" />
+                      {t.searchButton}
                     </button>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
+                {/* Processing Techniques Cards */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                   {processingTechniques.map((technique) => (
-                    <div key={technique.id} className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift">
-                      <h3 className="text-xl font-medium mb-3">{technique.title}</h3>
-                      <p className="text-muted-foreground mb-4">{technique.description}</p>
-                      
-                      <div className="mb-4">
-                        <h4 className="font-medium text-sm mb-2">Suitable for:</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {technique.crops.map((crop, idx) => (
-                            <span key={idx} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
-                              {crop}
-                            </span>
-                          ))}
+                    <div key={technique.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all card-hover-effect">
+                      <div className="h-48 overflow-hidden">
+                        <img 
+                          src={technique.image} 
+                          alt={technique.title} 
+                          className="w-full h-full object-cover transition-transform hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-lg font-medium mb-2">{technique.title}</h4>
+                        <p className="text-muted-foreground mb-4">{technique.description}</p>
+                        
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          <div className="flex items-center">
+                            <ClockIcon className="h-4 w-4 text-primary mr-2" />
+                            <span className="text-sm">{technique.equipmentNeeded}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <LocationIcon className="h-4 w-4 text-primary mr-2" />
+                            <span className="text-sm">{technique.averageCost}</span>
+                          </div>
+                          <div className="flex items-center col-span-2">
+                            <BarChart className="h-4 w-4 text-primary mr-2" />
+                            <span className="text-sm">{technique.yieldImprovement} {language === "english" ? "yield improvement" : "उपज में वृद्धि"}</span>
+                          </div>
                         </div>
+                        
+                        <button className="w-full py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
+                          {t.viewDetails}
+                        </button>
                       </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-sm mb-2">Key Steps:</h4>
-                        <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-                          {technique.steps.map((step, idx) => (
-                            <li key={idx}>{step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                      
-                      <button className="mt-4 w-full py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
-                        Learn More
-                      </button>
                     </div>
                   ))}
+                </div>
+
+                {/* Equipment Sharing Section */}
+                <div className="bg-primary/5 rounded-xl p-6 md:p-8 mb-10">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-medium mb-2">{t.sharingTitle}</h3>
+                      <p className="text-muted-foreground">{t.sharingSubtitle}</p>
+                    </div>
+                    <div className="flex space-x-4 mt-4 md:mt-0">
+                      <button className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                        {t.viewRequests}
+                      </button>
+                      <button className="px-4 py-2 bg-card border border-border text-foreground font-medium rounded-lg hover:bg-muted transition-colors">
+                        {t.offerEquipment}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {sharedEquipment.map((item) => (
+                      <div key={item.id} className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
+                        <div className="h-36 overflow-hidden">
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h4 className="text-base font-medium mb-1">{item.name}</h4>
+                          <div className="flex items-center text-sm text-muted-foreground mb-2">
+                            <User className="h-3 w-3 mr-1" />
+                            <span>{item.owner}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground mb-3">
+                            <LocationIcon className="h-3 w-3 mr-1" />
+                            <span>{item.location} • {item.distance} {t.kmAway}</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">{language === "english" ? "Rate:" : "दर:"}</span>
+                              <span className="ml-1 font-medium">{item.rate}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t.capacity}:</span>
+                              <span className="ml-1 font-medium">{item.capacity}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${item.available ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400'}`}>
+                              {item.available ? t.available : t.unavailable}
+                            </span>
+                            <div className="flex items-center">
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                              <Star className="h-3 w-3 text-yellow-500" />
+                            </div>
+                          </div>
+                          
+                          <button 
+                            className={`w-full py-2 rounded-lg font-medium transition-colors ${
+                              item.available
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-muted text-muted-foreground cursor-not-allowed"
+                            }`}
+                            disabled={!item.available}
+                          >
+                            {t.contactNow}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FAQs Section */}
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                  <h3 className="text-xl font-medium mb-6">{t.faqTitle}</h3>
+                  <div className="space-y-4">
+                    {faqs.map((faq) => (
+                      <div key={faq.id} className="border border-border rounded-lg overflow-hidden">
+                        <button
+                          className="w-full flex justify-between items-center p-4 text-left font-medium hover:bg-muted/50 transition-colors"
+                          onClick={() => toggleFaq(faq.id)}
+                        >
+                          <span>{faq.question}</span>
+                          {expandedFaqs.includes(faq.id) ? (
+                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </button>
+                        
+                        <div 
+                          className={`px-4 overflow-hidden transition-all duration-300 ${
+                            expandedFaqs.includes(faq.id) 
+                              ? "max-h-80 pb-4" 
+                              : "max-h-0"
+                          }`}
+                        >
+                          <p className="text-muted-foreground">{faq.answer}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-6 text-center">
+                    <Link to="/faqs" className="text-primary hover:underline inline-flex items-center">
+                      {t.viewAll}
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -315,304 +514,46 @@ const CropProcessing = () => {
           {/* Grading & Sorting Tab */}
           {activeTab === "grading" && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl md:text-3xl font-medium mb-6">AI-Powered Crop Grading & Sorting</h2>
-              <p className="text-muted-foreground mb-8">
-                Grading and sorting your crops properly can help you fetch premium prices in the market.
-                Our AI-powered image recognition tool helps classify your crops based on quality parameters.
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="bg-card rounded-xl border border-border p-6 shadow-sm card-gradient">
-                  <h3 className="text-xl font-medium mb-4">AI Crop Quality Assessment</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Upload an image of your crop sample to get instant AI-powered quality assessment and grading.
-                  </p>
-                  
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Select Crop Type</label>
-                    <select
-                      value={cropType}
-                      onChange={(e) => setCropType(e.target.value)}
-                      className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    >
-                      <option value="">Select crop type</option>
-                      <option value="wheat">Wheat</option>
-                      <option value="rice">Rice</option>
-                      <option value="potato">Potato</option>
-                      <option value="tomato">Tomato</option>
-                      <option value="apple">Apple</option>
-                      <option value="mango">Mango</option>
-                    </select>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Upload Crop Image</label>
-                    <div 
-                      className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => document.getElementById('cropImageInput')?.click()}
-                    >
-                      {cropImagePreview ? (
-                        <img 
-                          src={cropImagePreview} 
-                          alt="Crop preview" 
-                          className="mx-auto max-h-48 object-contain mb-2"
-                        />
-                      ) : (
-                        <div className="py-8">
-                          <Image className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                          <p className="text-muted-foreground">Click to upload an image or drag and drop</p>
-                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG or JPEG (max. 5MB)</p>
-                        </div>
-                      )}
-                      <input 
-                        id="cropImageInput"
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">{t.tabGrading}</h2>
+              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-4 bg-primary/5 rounded-lg">
+                    <div className="mb-3">
+                      <ZapIcon className="h-8 w-8 text-primary" />
                     </div>
+                    <h3 className="text-lg font-medium mb-2">{language === "english" ? "Manual Sorting" : "मैनुअल छंटाई"}</h3>
+                    <p className="text-muted-foreground">{language === "english" ? "Cost-effective techniques for small-scale sorting and grading of produce" : "उपज की छोटे पैमाने पर छंटाई और ग्रेडिंग के लिए किफायती तकनीकें"}</p>
                   </div>
-                  
-                  <button 
-                    onClick={analyzeImage}
-                    disabled={!cropImage || !cropType}
-                    className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                      cropImage && cropType 
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                        : "bg-muted text-muted-foreground cursor-not-allowed"
-                    }`}
-                  >
-                    <Microscope className="inline-block mr-2 h-5 w-5" />
-                    Analyze Crop Quality
-                  </button>
+                  <div className="p-4 bg-primary/5 rounded-lg">
+                    <div className="mb-3">
+                      <ZapIcon className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">{language === "english" ? "Mechanical Grading" : "मैकेनिकल ग्रेडिंग"}</h3>
+                    <p className="text-muted-foreground">{language === "english" ? "Medium to large-scale mechanical sorters for faster processing" : "तेज़ प्रसंस्करण के लिए मध्यम से बड़े पैमाने पर यांत्रिक सॉर्टर"}</p>
+                  </div>
+                  <div className="p-4 bg-primary/5 rounded-lg">
+                    <div className="mb-3">
+                      <ZapIcon className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">{language === "english" ? "AI-Powered Sorting" : "AI-संचालित छंटाई"}</h3>
+                    <p className="text-muted-foreground">{language === "english" ? "Advanced image recognition for precise quality grading" : "सटीक गुणवत्ता ग्रेडिंग के लिए उन्नत छवि पहचान"}</p>
+                  </div>
                 </div>
-
-                <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                  <h3 className="text-xl font-medium mb-4">Analysis Results</h3>
-                  
-                  {imageAnalysisResult ? (
-                    <div>
-                      <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 rounded-lg">
-                        <p className="font-medium">Analysis Complete</p>
-                        <p className="text-sm mt-1">Your crop has been successfully analyzed</p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center py-2 border-b border-border">
-                          <span className="text-muted-foreground">Quality Grade:</span>
-                          <span className="font-medium">{imageAnalysisResult.quality}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-border">
-                          <span className="text-muted-foreground">Detected Defects:</span>
-                          <span className="font-medium">{imageAnalysisResult.defects}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-border">
-                          <span className="text-muted-foreground">Size Classification:</span>
-                          <span className="font-medium">{imageAnalysisResult.size}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-border">
-                          <span className="text-muted-foreground">Estimated Market Value:</span>
-                          <span className="font-medium">{imageAnalysisResult.estimatedMarketValue}</span>
-                        </div>
-                        <div className="pt-2">
-                          <span className="text-muted-foreground block mb-2">Recommendations:</span>
-                          <span className="font-medium">{imageAnalysisResult.recommendations}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6 flex justify-between">
-                        <button className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
-                          Download Report
-                        </button>
-                        <button className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
-                          Find Buyers
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full py-12">
-                      <BarChart className="h-16 w-16 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">Upload a crop image and analyze to see results</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-primary/5 rounded-xl p-6 md:p-8 success-gradient">
-                <h3 className="text-xl font-medium mb-4">Manual Grading Guidelines</h3>
-                <p className="text-muted-foreground mb-6">
-                  Even without AI tools, you can apply these standard grading guidelines to classify your crops:
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Size Grading</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Use sizing meshes/screens</li>
-                      <li>Categorize as Small, Medium, Large, Extra Large</li>
-                      <li>Uniform size in each batch increases value</li>
-                    </ul>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Color & Appearance</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Check for uniform color</li>
-                      <li>Look for bruises, spots, or discoloration</li>
-                      <li>Grade based on visual appeal</li>
-                    </ul>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Maturity Assessment</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Check firmness for fruits/vegetables</li>
-                      <li>Ensure proper ripening stage</li>
-                      <li>Look for signs of over-maturity</li>
-                    </ul>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Defect Inspection</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Remove damaged, decayed items</li>
-                      <li>Check for pest infestation</li>
-                      <li>Separate misshapen produce</li>
-                    </ul>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Moisture Content</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Use moisture meters if available</li>
-                      <li>Ensure optimal moisture levels for storage</li>
-                      <li>Affects quality grading for grains/cereals</li>
-                    </ul>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Cleanliness</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Remove dirt, foreign materials</li>
-                      <li>Check for chemical residues</li>
-                      <li>Ensure proper washing where applicable</li>
-                    </ul>
-                  </div>
+                
+                <div className="mt-6 text-center">
+                  <p className="text-muted-foreground mb-4">{language === "english" ? "This section is under development. Check back soon for more content!" : "यह अनुभाग विकास के अधीन है। अधिक सामग्री के लिए जल्द ही वापस आएं!"}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Value Addition Methods Tab */}
+          {/* Value Addition Tab */}
           {activeTab === "valueAddition" && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl md:text-3xl font-medium mb-6">Value Addition Methods</h2>
-              <p className="text-muted-foreground mb-8">
-                Transform your raw agricultural produce into processed products to increase shelf life
-                and multiply your income. Learn about various value addition methods suitable for small
-                and medium-scale farmers.
-              </p>
-
-              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient mb-10">
-                <h3 className="text-xl font-medium mb-6">Benefits of Value Addition</h3>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="bg-background/60 rounded-lg p-4 border border-border">
-                    <TrendingUp className="h-8 w-8 text-green-600 mb-2" />
-                    <h4 className="font-medium mb-1">Increased Income</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Value-added products can sell for 30-150% more than raw produce, significantly boosting your farm income.
-                    </p>
-                  </div>
-                  <div className="bg-background/60 rounded-lg p-4 border border-border">
-                    <Clock className="h-8 w-8 text-amber-600 mb-2" />
-                    <h4 className="font-medium mb-1">Extended Shelf Life</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Processing techniques can extend the shelf life of perishable crops from days to months or even years.
-                    </p>
-                  </div>
-                  <div className="bg-background/60 rounded-lg p-4 border border-border">
-                    <ShoppingCart className="h-8 w-8 text-blue-600 mb-2" />
-                    <h4 className="font-medium mb-1">Market Diversification</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Access new markets and customer segments that prefer processed or ready-to-use agricultural products.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-10">
-                <h3 className="text-xl font-medium mb-4">Popular Value Addition Methods</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-muted/40">
-                        <th className="text-left p-3 border-b border-border">Method</th>
-                        <th className="text-left p-3 border-b border-border">Raw Crop</th>
-                        <th className="text-left p-3 border-b border-border">Processed Products</th>
-                        <th className="text-left p-3 border-b border-border">Value Increment</th>
-                        <th className="text-left p-3 border-b border-border">Investment</th>
-                        <th className="text-left p-3 border-b border-border">Difficulty</th>
-                        <th className="text-left p-3 border-b border-border">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {valueAdditionMethods.map((method) => (
-                        <tr key={method.id} className="border-b border-border hover:bg-muted/10 transition-colors">
-                          <td className="p-3 font-medium">{method.title}</td>
-                          <td className="p-3">{method.rawCrop}</td>
-                          <td className="p-3">{method.processedProduct}</td>
-                          <td className="p-3 text-green-600">{method.valueIncrement}</td>
-                          <td className="p-3">{method.investmentRequired}</td>
-                          <td className="p-3">{method.difficulty}</td>
-                          <td className="p-3">
-                            <button className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-lg hover:bg-primary/20 transition-colors">
-                              Learn More
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="bg-primary/5 rounded-xl p-6 md:p-8 success-gradient">
-                <h3 className="text-xl font-medium mb-6">Success Stories: Farmer-led Processing Enterprises</h3>
-                
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="bg-card rounded-lg border border-border p-5 shadow-sm">
-                    <div className="flex items-start">
-                      <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center mr-4 flex-shrink-0">
-                        <Leaf className="h-8 w-8 text-amber-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-lg mb-1">Sunita's Spice Enterprise</h4>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Started with processing home-grown turmeric into powder, now selling premium 
-                          spice mixes to retail stores across 3 states, increasing profits by 300%.
-                        </p>
-                        <button className="text-primary text-sm hover:underline flex items-center">
-                          <span>Read full story</span>
-                          <ArrowRight className="h-3 w-3 ml-1" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-card rounded-lg border border-border p-5 shadow-sm">
-                    <div className="flex items-start">
-                      <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mr-4 flex-shrink-0">
-                        <Leaf className="h-8 w-8 text-emerald-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-lg mb-1">Kisaan Fruit Preserves</h4>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          A farmer collective started processing surplus mangoes into jams and chutneys,
-                          extending seasonal income and reducing post-harvest losses by 60%.
-                        </p>
-                        <button className="text-primary text-sm hover:underline flex items-center">
-                          <span>Read full story</span>
-                          <ArrowRight className="h-3 w-3 ml-1" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">{t.tabValueAddition}</h2>
+              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                <div className="mt-6 text-center">
+                  <p className="text-muted-foreground mb-4">{language === "english" ? "This section is under development. Check back soon for more content!" : "यह अनुभाग विकास के अधीन है। अधिक सामग्री के लिए जल्द ही वापस आएं!"}</p>
                 </div>
               </div>
             </div>
@@ -621,171 +562,10 @@ const CropProcessing = () => {
           {/* Market Linkage Tab */}
           {activeTab === "marketLinkage" && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl md:text-3xl font-medium mb-6">Market Linkage</h2>
-              <p className="text-muted-foreground mb-8">
-                Connect directly with buyers, retailers, and food processing industries to
-                sell your crops at better prices. Our AI-powered price prediction helps you
-                decide when and where to sell for maximum profits.
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="bg-card rounded-xl border border-border p-6 shadow-sm card-gradient">
-                  <h3 className="text-xl font-medium mb-4">Available Buyers</h3>
-                  <p className="text-muted-foreground mb-6">
-                    These buyers are actively looking for quality crops. Contact them directly or request introduction.
-                  </p>
-                  
-                  <div className="space-y-6">
-                    {marketLinkages.map((buyer) => (
-                      <div key={buyer.id} className="border border-border rounded-lg p-4 bg-card/60">
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-medium">{buyer.buyerName}</h4>
-                          <span className="bg-primary/10 text-primary px-2 py-0.5 text-xs rounded-full">
-                            {buyer.cropType}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2 mb-4 text-sm">
-                          <div className="flex items-start">
-                            <Tag className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
-                            <span>{buyer.requirements}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <TrendingUp className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
-                            <span>{buyer.priceRange}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <ShoppingCart className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
-                            <span>{buyer.quantityNeeded}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <MapPin className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
-                            <span>{buyer.location}</span>
-                          </div>
-                        </div>
-                        
-                        <button className="w-full py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
-                          <Send className="h-4 w-4 inline-block mr-1" />
-                          Contact Buyer
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                  <h3 className="text-xl font-medium mb-4">AI-Powered Price Prediction</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Get market price forecasts based on historical data, current demand, and seasonal trends.
-                  </p>
-                  
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Select Crop</label>
-                    <select
-                      className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    >
-                      <option value="">Select a crop</option>
-                      <option value="wheat">Wheat</option>
-                      <option value="rice">Rice</option>
-                      <option value="potato">Potato</option>
-                      <option value="tomato">Tomato</option>
-                      <option value="onion">Onion</option>
-                    </select>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Your Location</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Enter your location"
-                        className="w-full py-2 pl-10 pr-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      />
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Quality Grade</label>
-                    <select
-                      className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    >
-                      <option value="">Select quality grade</option>
-                      <option value="a">Premium Grade</option>
-                      <option value="b">Standard Grade</option>
-                      <option value="c">Basic Grade</option>
-                    </select>
-                  </div>
-                  
-                  <button className="w-full py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
-                    Get Price Prediction
-                  </button>
-                  
-                  <div className="mt-6 border-t border-border pt-6">
-                    <h4 className="font-medium mb-3">Why use price prediction?</h4>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-start">
-                        <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-2 mt-0.5">
-                          <Zap className="h-3 w-3" />
-                        </div>
-                        <span>Know the best time to sell your crops</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-2 mt-0.5">
-                          <Zap className="h-3 w-3" />
-                        </div>
-                        <span>Identify price trends across different markets</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-2 mt-0.5">
-                          <Zap className="h-3 w-3" />
-                        </div>
-                        <span>Negotiate better with buyers using data-backed insights</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-primary/5 rounded-xl p-6 md:p-8 success-gradient">
-                <h3 className="text-xl font-medium mb-4">Direct Marketing Channels</h3>
-                <p className="text-muted-foreground mb-6">
-                  Explore these direct marketing channels to bypass middlemen and increase your profits:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Farmers' Markets</h4>
-                    <p className="text-sm text-muted-foreground mb-3">Sell directly to consumers at weekly markets in urban areas.</p>
-                    <button className="text-primary text-sm hover:underline flex items-center">
-                      <span>Find nearby markets</span>
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </button>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Farm-to-Restaurant</h4>
-                    <p className="text-sm text-muted-foreground mb-3">Supply fresh produce directly to local restaurants and hotels.</p>
-                    <button className="text-primary text-sm hover:underline flex items-center">
-                      <span>Connect with restaurants</span>
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </button>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Online Marketplaces</h4>
-                    <p className="text-sm text-muted-foreground mb-3">Sell through agricultural e-commerce platforms and reach more customers.</p>
-                    <button className="text-primary text-sm hover:underline flex items-center">
-                      <span>Browse platforms</span>
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </button>
-                  </div>
-                  <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
-                    <h4 className="font-medium mb-2">Farmer Producer Organizations</h4>
-                    <p className="text-sm text-muted-foreground mb-3">Join FPOs to increase bargaining power and access larger markets.</p>
-                    <button className="text-primary text-sm hover:underline flex items-center">
-                      <span>Find nearby FPOs</span>
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </button>
-                  </div>
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">{t.tabMarketLinkage}</h2>
+              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                <div className="mt-6 text-center">
+                  <p className="text-muted-foreground mb-4">{language === "english" ? "This section is under development. Check back soon for more content!" : "यह अनुभाग विकास के अधीन है। अधिक सामग्री के लिए जल्द ही वापस आएं!"}</p>
                 </div>
               </div>
             </div>
@@ -795,7 +575,6 @@ const CropProcessing = () => {
       </section>
       
       <Footer />
-      <ChatBot />
     </div>
   );
 };

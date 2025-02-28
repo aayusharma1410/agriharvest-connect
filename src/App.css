@@ -71,11 +71,18 @@
   color: transparent;
 }
 
+.primary-gradient {
+  background: linear-gradient(135deg, #7CB342 0%, #4B830D 100%);
+}
+
+.form-gradient {
+  background: linear-gradient(135deg, rgba(147,250,165,0.05) 0%, rgba(123,232,131,0.1) 100%);
+}
+
 .multi-color-border {
-  border-top: 3px solid #3a9e5f;
-  border-bottom: 3px solid #65c89b;
-  border-left: 3px solid #3a9e5f;
-  border-right: 3px solid #65c89b;
+  border-width: 2px;
+  border-style: solid;
+  border-image: linear-gradient(to right, #3a9e5f, #65c89b) 1;
 }
 
 .shadow-subtle {
@@ -89,4 +96,58 @@
 .hover-lift:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Language Transition Effects */
+.language-fade-enter {
+  opacity: 0;
+}
+.language-fade-enter-active {
+  opacity: 1;
+  transition: opacity 400ms;
+}
+.language-fade-exit {
+  opacity: 1;
+}
+.language-fade-exit-active {
+  opacity: 0;
+  transition: opacity 400ms;
+}
+
+/* Custom Button Styles */
+.btn-primary-gradient {
+  background: linear-gradient(135deg, #7CB342 0%, #4B830D 100%);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-gradient:hover {
+  background: linear-gradient(135deg, #67a32c 0%, #3b6c0a 100%);
+  box-shadow: 0 4px 12px rgba(76, 130, 13, 0.3);
+}
+
+.btn-secondary-gradient {
+  background: linear-gradient(135deg, #FFD54F 0%, #FFC107 100%);
+  color: #4B4B4B;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary-gradient:hover {
+  background: linear-gradient(135deg, #FFC107 0%, #FFA000 100%);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+/* Card Hover Effects */
+.card-hover-effect {
+  transition: all 0.3s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix the icons in CropProcessing and Transportation */
+.missing-icon-placeholder {
+  @apply h-5 w-5 text-primary;
 }

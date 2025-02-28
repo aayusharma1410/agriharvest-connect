@@ -25,8 +25,14 @@ const Navbar = () => {
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === "english" ? "hindi" : "english");
-    localStorage.setItem('language', language === "english" ? "hindi" : "english");
+    const newLanguage = language === "english" ? "hindi" : "english";
+    setLanguage(newLanguage);
+    localStorage.setItem('language', newLanguage);
+    
+    // Dispatch event for other components to listen to
+    window.dispatchEvent(new CustomEvent('languageChange', { 
+      detail: { language: newLanguage }
+    }));
   };
 
   useEffect(() => {
@@ -50,14 +56,27 @@ const Navbar = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
+    // Language change listener
+    const handleLanguageChange = (e: any) => {
+      if (e.detail && e.detail.language) {
+        setLanguage(e.detail.language);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('languageChange', handleLanguageChange);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('languageChange', handleLanguageChange);
+    };
   }, []);
 
   const navLinks = [
     { name: language === "english" ? "Home" : "होम", path: "/" },
     { name: language === "english" ? "Storage" : "भंडारण", path: "/storage" },
     { name: language === "english" ? "Transportation" : "परिवहन", path: "/transportation" },
+    { name: language === "english" ? "Crop Processing" : "फसल प्रसंस्करण", path: "/crop-processing" },
     { name: language === "english" ? "Crop Prediction" : "फसल भविष्यवाणी", path: "/crop-prediction" },
     { name: language === "english" ? "Government Schemes" : "सरकारी योजनाएं", path: "/government-schemes" },
     { name: language === "english" ? "Contact" : "संपर्क", path: "/contact" }
@@ -70,14 +89,14 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center" onClick={closeMenu}>
-              <span className="text-2xl font-bold text-primary">
+              <span className="text-2xl font-bold text-primary mr-2">
                 Agri<span className="text-secondary-foreground">Sarthi</span>
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4 lg:space-x-8">
+          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -100,14 +119,14 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link 
               to="/login" 
-              className="mr-2 text-foreground/80 hover:text-primary rounded-lg transition-colors px-3 py-2 hidden md:block"
+              className="mr-3 text-foreground/80 hover:text-primary rounded-lg transition-colors px-3 py-2 hidden md:block"
             >
               {language === "english" ? "Login" : "लॉगिन"}
             </Link>
 
             <button
               onClick={toggleLanguage}
-              className="p-2 mr-2 text-foreground/80 hover:text-primary rounded-full transition-colors"
+              className="p-2 mr-3 text-foreground/80 hover:text-primary rounded-full transition-colors"
               aria-label="Toggle language"
             >
               <Languages size={20} />
@@ -115,7 +134,7 @@ const Navbar = () => {
 
             <button
               onClick={toggleDarkMode}
-              className="p-2 mr-2 text-foreground/80 hover:text-primary rounded-full transition-colors"
+              className="p-2 mr-3 text-foreground/80 hover:text-primary rounded-full transition-colors"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
