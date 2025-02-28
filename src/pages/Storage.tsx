@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle } from "lucide-react";
+import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle, Share2, Users } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ChatBot from "../components/ChatBot";
@@ -12,22 +12,23 @@ const Storage = () => {
   const [cropVariety, setCropVariety] = useState("");
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [pesticidesUsed, setPesticidesUsed] = useState([]);
+  const [pesticidesUsed, setPesticidesUsed] = useState<string[]>([]);
   const [harvestDate, setHarvestDate] = useState("");
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [showSharingOptions, setShowSharingOptions] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  const handleAddPesticide = (pesticide) => {
+  const handleAddPesticide = (pesticide: string) => {
     if (pesticide && !pesticidesUsed.includes(pesticide)) {
       setPesticidesUsed([...pesticidesUsed, pesticide]);
     }
   };
 
-  const handleRemovePesticide = (index) => {
+  const handleRemovePesticide = (index: number) => {
     const newPesticides = [...pesticidesUsed];
     newPesticides.splice(index, 1);
     setPesticidesUsed(newPesticides);
@@ -35,11 +36,12 @@ const Storage = () => {
 
   const analyzeCrop = () => {
     // Simulating AI analysis based on inputs
+    const parsedQuantity = parseInt(quantity);
     const result = {
       recommendedStorageType: cropType === "fruits" || cropType === "vegetables" ? "Cold Storage" : "Dry Warehouse",
       temperatureRange: cropType === "fruits" ? "2-4°C" : cropType === "vegetables" ? "5-10°C" : "15-25°C",
       humidityRange: cropType === "fruits" || cropType === "vegetables" ? "85-95%" : "50-70%",
-      transportationMethod: quantity > 5000 ? "Refrigerated Truck" : "Standard Truck",
+      transportationMethod: parsedQuantity > 5000 ? "Refrigerated Truck" : "Standard Truck",
       storageWarnings: pesticidesUsed.length > 2 ? "High pesticide concentration detected - special ventilation required" : null,
       estimatedShelfLife: cropType === "fruits" ? "2-4 weeks" : cropType === "vegetables" ? "1-3 weeks" : "3-6 months"
     };
@@ -59,7 +61,8 @@ const Storage = () => {
       priceRange: "₹5-7 per kg/month",
       image: "/placeholder.svg",
       rating: 4.7,
-      cropTypes: ["fruits", "vegetables"]
+      cropTypes: ["fruits", "vegetables"],
+      sharingAvailable: true,
     },
     {
       id: 2,
@@ -71,7 +74,8 @@ const Storage = () => {
       priceRange: "₹6-8 per kg/month",
       image: "/placeholder.svg",
       rating: 4.5,
-      cropTypes: ["fruits", "dairy"]
+      cropTypes: ["fruits", "dairy"],
+      sharingAvailable: true,
     },
     {
       id: 3,
@@ -83,7 +87,8 @@ const Storage = () => {
       priceRange: "₹4-6 per kg/month",
       image: "/placeholder.svg",
       rating: 4.2,
-      cropTypes: ["fruits", "vegetables", "flowers"]
+      cropTypes: ["fruits", "vegetables", "flowers"],
+      sharingAvailable: false,
     },
     {
       id: 4,
@@ -95,7 +100,8 @@ const Storage = () => {
       priceRange: "₹3-5 per kg/month",
       image: "/placeholder.svg",
       rating: 4.3,
-      cropTypes: ["grains", "cereals", "pulses"]
+      cropTypes: ["grains", "cereals", "pulses"],
+      sharingAvailable: true,
     }
   ];
 
@@ -196,6 +202,16 @@ const Storage = () => {
               }`}
             >
               Crop Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab("sharing")}
+              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                activeTab === "sharing" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              Storage Sharing
             </button>
           </div>
         </div>
@@ -319,8 +335,12 @@ const Storage = () => {
                     <div className="flex gap-2">
                       <select
                         className="flex-grow py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                        onChange={(e) => e.target.value && handleAddPesticide(e.target.value)}
-                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddPesticide(e.target.value);
+                            e.target.value = "";
+                          }
+                        }}
                       >
                         <option value="">Select pesticide</option>
                         {pesticideOptions.map((option, index) => (
@@ -328,7 +348,13 @@ const Storage = () => {
                         ))}
                       </select>
                       <button 
-                        onClick={() => document.querySelector('select').value && handleAddPesticide(document.querySelector('select').value)}
+                        onClick={() => {
+                          const select = document.querySelector('select[aria-label="pesticide-select"]') as HTMLSelectElement;
+                          if (select && select.value) {
+                            handleAddPesticide(select.value);
+                            select.value = "";
+                          }
+                        }}
                         className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
                       >
                         Add
@@ -392,20 +418,23 @@ const Storage = () => {
                           </div>
                         </div>
                         
-                        <div className="mb-3">
-                          <div className="text-xs text-muted-foreground mb-1">Suitable for:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {option.cropTypes.map((crop, index) => (
-                              <span key={index} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                                {crop}
-                              </span>
-                            ))}
+                        {option.sharingAvailable && (
+                          <div className="mb-3 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-2 rounded-lg flex items-center">
+                            <Users className="h-4 w-4 text-indigo-500 mr-2" />
+                            <span className="text-sm text-indigo-700 dark:text-indigo-300">Sharing Available</span>
                           </div>
-                        </div>
+                        )}
                         
-                        <button className="w-full py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
-                          View Details
-                        </button>
+                        <div className="flex gap-2">
+                          <button className="flex-1 py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
+                            View Details
+                          </button>
+                          {option.sharingAvailable && (
+                            <button className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors">
+                              <Share2 className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -432,7 +461,7 @@ const Storage = () => {
 
               <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient">
                 <h3 className="text-xl font-medium mb-4">Search Filters</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">Distance</label>
                     <select
@@ -464,6 +493,15 @@ const Storage = () => {
                       <option value="high">High (&gt;70%)</option>
                       <option value="medium">Medium (30-70%)</option>
                       <option value="low">Low (&lt;30%)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Sharing Options</label>
+                    <select
+                      className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    >
+                      <option value="all">Show All</option>
+                      <option value="sharing-only">Only Sharing Available</option>
                     </select>
                   </div>
                 </div>
@@ -599,9 +637,14 @@ const Storage = () => {
                     </div>
                     <div className="flex gap-2">
                       <select
+                        aria-label="pesticide-select"
                         className="flex-grow py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                        onChange={(e) => e.target.value && handleAddPesticide(e.target.value)}
-                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddPesticide(e.target.value);
+                            e.target.value = "";
+                          }
+                        }}
                       >
                         <option value="">Select pesticide</option>
                         {pesticideOptions.map((option, index) => (
@@ -609,7 +652,13 @@ const Storage = () => {
                         ))}
                       </select>
                       <button 
-                        onClick={() => document.querySelector('select[value=""]') && handleAddPesticide(document.querySelector('select[value=""]').value)}
+                        onClick={() => {
+                          const select = document.querySelector('select[aria-label="pesticide-select"]') as HTMLSelectElement;
+                          if (select && select.value) {
+                            handleAddPesticide(select.value);
+                            select.value = "";
+                          }
+                        }}
                         className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
                       >
                         Add
@@ -703,7 +752,7 @@ const Storage = () => {
                       <h4 className="text-lg font-medium mb-4">Nearby Storage Facilities Matching Your Requirements</h4>
                       <div className="grid md:grid-cols-3 gap-4">
                         {storageOptions
-                          .filter(option => option.cropTypes.includes(cropType))
+                          .filter(option => option.cropTypes && option.cropTypes.includes(cropType))
                           .slice(0, 3)
                           .map(option => (
                             <div key={option.id} className="bg-card rounded-lg border border-border p-4 hover-lift">
@@ -713,7 +762,13 @@ const Storage = () => {
                                 <span>{option.temperature}</span>
                                 <span>{option.capacity}</span>
                               </div>
-                              <button className="w-full mt-3 py-1.5 text-sm bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
+                              {option.sharingAvailable && (
+                                <div className="mt-2 mb-2 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-1 rounded text-xs flex items-center">
+                                  <Users className="h-3 w-3 text-indigo-500 mr-1" />
+                                  <span className="text-indigo-700 dark:text-indigo-300">Sharing Available</span>
+                                </div>
+                              )}
+                              <button className="w-full mt-2 py-1.5 text-sm bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
                                 Select
                               </button>
                             </div>
@@ -723,6 +778,163 @@ const Storage = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Storage Sharing Tab */}
+          {activeTab === "sharing" && (
+            <div className="animate-fade-in">
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">Storage Sharing for Small Farmers</h2>
+              <p className="text-muted-foreground mb-8">
+                Share storage facilities with other farmers to reduce costs and minimize waste. 
+                Our platform connects you with other farmers in your area who have similar storage needs.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
+                <div className="bg-card rounded-xl border border-border p-6 shadow-sm card-gradient">
+                  <h3 className="text-xl font-medium mb-4">Benefits of Storage Sharing</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-3 mt-1">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="font-medium">Cost Reduction</span>
+                        <p className="text-muted-foreground text-sm mt-1">Split the costs with other farmers and save up to 60% on storage expenses.</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-3 mt-1">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="font-medium">Access to Premium Facilities</span>
+                        <p className="text-muted-foreground text-sm mt-1">Get access to high-quality storage facilities that might be otherwise unaffordable.</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-3 mt-1">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="font-medium">Community Building</span>
+                        <p className="text-muted-foreground text-sm mt-1">Connect with other farmers in your area and build a supportive network.</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-1 rounded-full mr-3 mt-1">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="font-medium">Reduced Wastage</span>
+                        <p className="text-muted-foreground text-sm mt-1">Optimize storage space and reduce wastage through efficient utilization.</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-card rounded-xl border border-border p-6 shadow-sm card-gradient">
+                  <h3 className="text-xl font-medium mb-4">How Storage Sharing Works</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        1
+                      </div>
+                      <p>Enter your crop details and storage requirements</p>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        2
+                      </div>
+                      <p>Our system matches you with compatible farmers and available facilities</p>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        3
+                      </div>
+                      <p>Connect with matched farmers and discuss sharing arrangements</p>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        4
+                      </div>
+                      <p>Book the facility together and split the costs</p>
+                    </div>
+                    <div className="mt-4">
+                      <button className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
+                        Find Storage Partners
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                <h3 className="text-xl font-medium mb-6">Available Storage Sharing Opportunities</h3>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4">Location</th>
+                        <th className="text-left py-3 px-4">Facility Type</th>
+                        <th className="text-left py-3 px-4">Total Capacity</th>
+                        <th className="text-left py-3 px-4">Available Space</th>
+                        <th className="text-left py-3 px-4">Cost per Farmer</th>
+                        <th className="text-left py-3 px-4">Farmers Joined</th>
+                        <th className="text-left py-3 px-4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border hover:bg-muted/20">
+                        <td className="py-3 px-4">Sonipat, Haryana</td>
+                        <td className="py-3 px-4">Cold Storage</td>
+                        <td className="py-3 px-4">5000 kg</td>
+                        <td className="py-3 px-4">2000 kg</td>
+                        <td className="py-3 px-4">₹3.5/kg/month</td>
+                        <td className="py-3 px-4">3/5</td>
+                        <td className="py-3 px-4">
+                          <button className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-lg">
+                            Join
+                          </button>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border hover:bg-muted/20">
+                        <td className="py-3 px-4">Nashik, Maharashtra</td>
+                        <td className="py-3 px-4">Warehouse</td>
+                        <td className="py-3 px-4">8000 kg</td>
+                        <td className="py-3 px-4">4000 kg</td>
+                        <td className="py-3 px-4">₹2.8/kg/month</td>
+                        <td className="py-3 px-4">2/6</td>
+                        <td className="py-3 px-4">
+                          <button className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-lg">
+                            Join
+                          </button>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border hover:bg-muted/20">
+                        <td className="py-3 px-4">Bhatinda, Punjab</td>
+                        <td className="py-3 px-4">Grain Silo</td>
+                        <td className="py-3 px-4">10000 kg</td>
+                        <td className="py-3 px-4">3000 kg</td>
+                        <td className="py-3 px-4">₹2.2/kg/month</td>
+                        <td className="py-3 px-4">4/8</td>
+                        <td className="py-3 px-4">
+                          <button className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-lg">
+                            Join
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-6 flex justify-center">
+                  <button className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                    Create New Sharing Group
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
