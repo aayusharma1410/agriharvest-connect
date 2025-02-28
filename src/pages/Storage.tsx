@@ -327,9 +327,9 @@ const Storage = () => {
                       className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     >
                       <option value="any">Any Availability</option>
-                      <option value="high">High (>70%)</option>
+                      <option value="high">High (&gt;70%)</option>
                       <option value="medium">Medium (30-70%)</option>
-                      <option value="low">Low (<30%)</option>
+                      <option value="low">Low (&lt;30%)</option>
                     </select>
                   </div>
                 </div>
