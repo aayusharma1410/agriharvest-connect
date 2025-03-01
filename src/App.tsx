@@ -12,6 +12,7 @@ import CropPrediction from "./pages/CropPrediction";
 import GovernmentSchemes from "./pages/GovernmentSchemes";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
+import CropProcessing from "./pages/CropProcessing";
 import ChatBot from "./components/ChatBot";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/storage" element={<Storage />} />
           <Route path="/transportation" element={<Transportation />} />
           <Route path="/crop-prediction" element={<CropPrediction />} />
+          <Route path="/crop-processing" element={<CropProcessing />} />
           <Route path="/government-schemes" element={<GovernmentSchemes />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />

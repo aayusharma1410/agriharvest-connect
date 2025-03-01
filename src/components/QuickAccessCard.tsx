@@ -23,7 +23,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
   return (
     <Link 
       to={to} 
-      className={`block group overflow-hidden rounded-2xl border border-border ${color} card-hover animate-fade-in`}
+      className={`block group overflow-hidden rounded-2xl border border-border ${color} card-hover-effect shadow-subtle hover-lift`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-6 h-full flex flex-col">
