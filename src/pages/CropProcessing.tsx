@@ -13,30 +13,33 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 
+// Complete list of all Indian states and union territories
 const indianStates = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", 
+  "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Goa", 
+  "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Ladakh", 
+  "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
+  "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
   "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
 ];
 
 const ProcessingTechniqueCard = ({ title, icon: Icon, description, state, delay = 0 }) => (
-  <Card className="card-hover-effect border-border bg-card animate-fade-in" style={{ animationDelay: `${delay}ms` }}>
+  <Card className="card-hover-effect border-border bg-card/80 backdrop-blur-sm animate-fade-in shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2" style={{ animationDelay: `${delay}ms` }}>
     <div className="p-6 flex flex-col h-full">
       <div className="flex items-center mb-4">
-        <div className="bg-primary/10 p-2 rounded-lg mr-3">
+        <div className="bg-primary/10 p-3 rounded-xl mr-3 shadow-inner">
           <Icon className="h-6 w-6 text-primary" />
         </div>
         <h3 className="text-lg font-medium">{title}</h3>
       </div>
       <p className="text-muted-foreground mb-4 text-sm flex-grow">{description}</p>
-      <div className="flex justify-between items-center mt-auto pt-4 border-t border-border">
-        <span className="text-xs bg-secondary/30 text-secondary-foreground px-2 py-1 rounded">
+      <div className="flex justify-between items-center mt-auto pt-4 border-t border-border/50">
+        <span className="text-xs bg-secondary/30 text-secondary-foreground px-2 py-1 rounded-full">
           {state}
         </span>
-        <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+        <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-primary/10 transition-colors">
           Learn more
         </Button>
       </div>
@@ -66,14 +69,24 @@ const CropProcessing = () => {
 
     window.addEventListener('languageChange', handleLanguageChange);
     
+    // Show welcome toast
+    toast({
+      title: language === "english" ? "Crop Processing Hub" : "फसल प्रसंस्करण केंद्र",
+      description: language === "english" 
+        ? "Explore techniques and solutions for your crops" 
+        : "अपनी फसलों के लिए तकनीकों और समाधानों का अन्वेषण करें",
+      className: "success-gradient"
+    });
+    
     return () => {
       window.removeEventListener('languageChange', handleLanguageChange);
     };
-  }, []);
+  }, [language]);
 
   const translations = {
     english: {
-      pageTitle: "Crop Processing",
+      pageTitle: "Crop Processing Hub",
+      pageSubtitle: "Discover modern techniques & solutions for post-harvest processing",
       search: "Search techniques, methods, etc.",
       stateSelect: "Select State",
       allStates: "All States",
@@ -84,9 +97,12 @@ const CropProcessing = () => {
       filter: "Filter",
       noResults: "No results found",
       learn: "Learn more",
+      featuredTitle: "Featured Solutions",
+      featuredSubtitle: "Top-rated processing techniques across India"
     },
     hindi: {
-      pageTitle: "फसल प्रसंस्करण",
+      pageTitle: "फसल प्रसंस्करण केंद्र",
+      pageSubtitle: "कटाई के बाद प्रसंस्करण के लिए आधुनिक तकनीकों और समाधानों की खोज करें",
       search: "तकनीकों, विधियों आदि की खोज करें",
       stateSelect: "राज्य चुनें",
       allStates: "सभी राज्य",
@@ -97,6 +113,8 @@ const CropProcessing = () => {
       filter: "फ़िल्टर",
       noResults: "कोई परिणाम नहीं मिला",
       learn: "और जानें",
+      featuredTitle: "विशेष समाधान",
+      featuredSubtitle: "पूरे भारत में शीर्ष रेटेड प्रसंस्करण तकनीकें"
     }
   };
 
@@ -247,6 +265,79 @@ const CropProcessing = () => {
       state: "Assam",
       category: "marketLinkage"
     },
+    // Adding more techniques as requested
+    {
+      title: language === "english" ? "Solar Drying Technology" : "सौर सुखाने की तकनीक",
+      icon: Wheat,
+      description: language === "english" 
+        ? "Eco-friendly solar-powered drying systems for energy-efficient crop dehydration."
+        : "ऊर्जा-कुशल फसल निर्जलीकरण के लिए पर्यावरण अनुकूल सौर ऊर्जा चालित सुखाने की प्रणाली।",
+      state: "Rajasthan",
+      category: "techniques"
+    },
+    {
+      title: language === "english" ? "Vacuum Packaging" : "वैक्यूम पैकेजिंग",
+      icon: PackageOpen,
+      description: language === "english"
+        ? "Advanced packaging that removes air to extend shelf life of processed agricultural products."
+        : "उन्नत पैकेजिंग जो प्रसंस्कृत कृषि उत्पादों के शेल्फ जीवन को बढ़ाने के लिए हवा को हटाती है।",
+      state: "Maharashtra",
+      category: "techniques"
+    },
+    {
+      title: language === "english" ? "Organic Certification" : "जैविक प्रमाणीकरण",
+      icon: Award,
+      description: language === "english"
+        ? "Step-by-step guidance for obtaining organic certification for processed farm products."
+        : "प्रसंस्कृत कृषि उत्पादों के लिए जैविक प्रमाणन प्राप्त करने के लिए चरण-दर-चरण मार्गदर्शन।",
+      state: "Uttarakhand",
+      category: "grading"
+    },
+    {
+      title: language === "english" ? "Fruit Jam Production" : "फल जैम उत्पादन",
+      icon: CookingPot,
+      description: language === "english"
+        ? "Processes and equipment for small to medium scale fruit jam and jelly production."
+        : "छोटे से मध्यम पैमाने पर फल जैम और जेली उत्पादन के लिए प्रक्रियाएं और उपकरण।",
+      state: "Himachal Pradesh",
+      category: "valueAddition"
+    },
+    {
+      title: language === "english" ? "Online Marketplace Setup" : "ऑनलाइन मार्केटप्लेस सेटअप",
+      icon: ShoppingCart,
+      description: language === "english"
+        ? "Creating and managing online stores to sell processed agricultural products."
+        : "प्रसंस्कृत कृषि उत्पादों को बेचने के लिए ऑनलाइन स्टोर बनाना और प्रबंधित करना।",
+      state: "Delhi",
+      category: "marketLinkage"
+    },
+    {
+      title: language === "english" ? "Fermentation Techniques" : "किण्वन तकनीक",
+      icon: CookingPot,
+      description: language === "english"
+        ? "Traditional and modern fermentation methods for creating value-added products."
+        : "मूल्य वर्धित उत्पादों को बनाने के लिए पारंपरिक और आधुनिक किण्वन विधियां।",
+      state: "Goa",
+      category: "valueAddition"
+    },
+    {
+      title: language === "english" ? "Grain Storage Solutions" : "अनाज भंडारण समाधान",
+      icon: Warehouse,
+      description: language === "english"
+        ? "Advanced silos and storage systems to prevent pest damage and moisture issues."
+        : "कीट क्षति और नमी की समस्याओं को रोकने के लिए उन्नत साइलो और भंडारण प्रणालियां।",
+      state: "Madhya Pradesh",
+      category: "techniques"
+    },
+    {
+      title: language === "english" ? "Food Safety Compliance" : "खाद्य सुरक्षा अनुपालन",
+      icon: Award,
+      description: language === "english"
+        ? "Meeting FSSAI standards and requirements for processed agricultural products."
+        : "प्रसंस्कृत कृषि उत्पादों के लिए FSSAI मानकों और आवश्यकताओं को पूरा करना।",
+      state: "Gujarat",
+      category: "grading"
+    },
   ];
 
   // Filter by search query, selected state, and active tab
@@ -272,9 +363,31 @@ const CropProcessing = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <main className="flex-grow container mx-auto px-4 py-20 md:py-24">
+      <main className="flex-grow container mx-auto px-4 py-10 md:py-16">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center">{t.pageTitle}</h1>
+          <div className="text-center mb-10">
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 text-gradient">{t.pageTitle}</h1>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">{t.pageSubtitle}</p>
+          </div>
+          
+          {/* Featured/Highlighted Content Section */}
+          <div className="mb-12 rounded-xl primary-gradient p-8 text-white shadow-lg">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">{t.featuredTitle}</h2>
+            <p className="mb-6 opacity-90">{t.featuredSubtitle}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {processingTechniques.slice(0, 3).map((technique, idx) => (
+                <Card key={idx} className="bg-white/10 backdrop-blur-sm border-0 text-white hover:bg-white/20 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${idx * 150}ms` }}>
+                  <div className="p-4">
+                    <div className="flex items-center mb-2">
+                      <technique.icon className="h-5 w-5 mr-2" />
+                      <h3 className="font-medium">{technique.title}</h3>
+                    </div>
+                    <p className="text-sm opacity-90">{technique.description}</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
           
           {/* Search and Filter */}
           <div className="mb-8 flex flex-col md:flex-row gap-4">
@@ -282,7 +395,7 @@ const CropProcessing = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
                 placeholder={t.search}
-                className="pl-10"
+                className="pl-10 bg-card/60 backdrop-blur-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -290,7 +403,7 @@ const CropProcessing = () => {
             
             <div className="w-full md:w-64">
               <Select value={selectedState} onValueChange={setSelectedState}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-card/60 backdrop-blur-sm">
                   <SelectValue placeholder={t.stateSelect} />
                 </SelectTrigger>
                 <SelectContent>
@@ -302,7 +415,7 @@ const CropProcessing = () => {
               </Select>
             </div>
             
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2 bg-card/60 backdrop-blur-sm">
               <Filter className="h-4 w-4" />
               {t.filter}
             </Button>
@@ -310,7 +423,7 @@ const CropProcessing = () => {
           
           {/* Tabs */}
           <Tabs defaultValue="techniques" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="w-full md:w-auto grid grid-cols-2 md:grid-cols-4 mx-auto">
+            <TabsList className="w-full md:w-auto grid grid-cols-2 md:grid-cols-4 mx-auto bg-card/60 backdrop-blur-sm">
               <TabsTrigger value="techniques">{t.tabTechniques}</TabsTrigger>
               <TabsTrigger value="grading">{t.tabGrading}</TabsTrigger>
               <TabsTrigger value="valueAddition">{t.tabValueAddition}</TabsTrigger>
