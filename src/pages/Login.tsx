@@ -1,12 +1,22 @@
 
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ChevronLeft, Languages, User, Key, Eye, EyeOff } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronLeft, Languages, User, Key, Eye, EyeOff, Phone } from "lucide-react";
+import { supabase } from "../integrations/supabase/client";
+import { toast } from "sonner";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [language, setLanguage] = useState<"english" | "hindi">("english");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Check for saved language preference
@@ -14,10 +24,26 @@ const Login = () => {
     if (savedLanguage === 'hindi') {
       setLanguage('hindi');
     }
-  }, []);
+    
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/');
+      }
+    };
+    
+    checkUser();
+  }, [navigate]);
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
+    // Reset form fields when switching forms
+    setName("");
+    setPhone("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
   };
 
   const toggleLanguage = () => {
@@ -34,6 +60,64 @@ const Login = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      if (isLogin) {
+        // Login logic
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        if (data.session) {
+          toast.success(language === "english" ? "Login successful!" : "लॉगिन सफल!");
+          navigate('/');
+        }
+      } else {
+        // Registration logic
+        if (password !== confirmPassword) {
+          toast.error(language === "english" ? "Passwords do not match" : "पासवर्ड मेल नहीं खाते");
+          setLoading(false);
+          return;
+        }
+        
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+              phone_number: phone,
+            },
+          },
+        });
+        
+        if (error) throw error;
+        
+        toast.success(
+          language === "english" 
+            ? "Registration successful! Please verify your email." 
+            : "पंजीकरण सफल! कृपया अपना ईमेल सत्यापित करें।"
+        );
+        
+        // Auto login for development, in production they would verify email first
+        if (data.session) {
+          navigate('/');
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || (language === "english" ? "An error occurred" : "एक त्रुटि हुई"));
+      console.error("Authentication error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Content based on language selection
   const content = {
@@ -47,6 +131,7 @@ const Login = () => {
         : "Create your account to get started",
       name: "Full Name",
       phone: "Phone Number",
+      email: "Email Address",
       password: "Password",
       confirmPassword: "Confirm Password",
       loginButton: "Login",
@@ -58,6 +143,7 @@ const Login = () => {
       login: "Login",
       namePlaceholder: "Enter your full name",
       phonePlaceholder: "Enter your phone number",
+      emailPlaceholder: "Enter your email address",
       passwordPlaceholder: "Enter your password",
       confirmPasswordPlaceholder: "Confirm your password",
     },
@@ -71,6 +157,7 @@ const Login = () => {
         : "प्रारंभ करने के लिए अपना खाता बनाएं",
       name: "पूरा नाम",
       phone: "फोन नंबर",
+      email: "ईमेल पता",
       password: "पासवर्ड",
       confirmPassword: "पासवर्ड की पुष्टि करें",
       loginButton: "लॉगिन",
@@ -82,6 +169,7 @@ const Login = () => {
       login: "लॉगिन",
       namePlaceholder: "अपना पूरा नाम दर्ज करें",
       phonePlaceholder: "अपना फोन नंबर दर्ज करें",
+      emailPlaceholder: "अपना ईमेल पता दर्ज करें",
       passwordPlaceholder: "अपना पासवर्ड दर्ज करें",
       confirmPasswordPlaceholder: "अपने पासवर्ड की पुष्टि करें",
     }
@@ -116,7 +204,7 @@ const Login = () => {
             </div>
             <p className="text-muted-foreground mb-8">{t.subtitle}</p>
 
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium mb-1" htmlFor="name">
@@ -127,26 +215,54 @@ const Login = () => {
                     <input
                       type="text"
                       id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       placeholder={t.namePlaceholder}
+                      required={!isLogin}
                     />
                   </div>
                 </div>
               )}
+              
               <div className="space-y-2">
-                <label className="block text-sm font-medium mb-1" htmlFor="phone">
-                  {t.phone}
+                <label className="block text-sm font-medium mb-1" htmlFor="email">
+                  {t.email}
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">+91</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                   <input
-                    type="tel"
-                    id="phone"
-                    className="w-full p-3 pl-12 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    placeholder={t.phonePlaceholder}
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder={t.emailPlaceholder}
+                    required
                   />
                 </div>
               </div>
+              
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium mb-1" htmlFor="phone">
+                    {t.phone}
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      id="phone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      placeholder={t.phonePlaceholder}
+                      required={!isLogin}
+                    />
+                  </div>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <label className="block text-sm font-medium mb-1" htmlFor="password">
                   {t.password}
@@ -156,8 +272,11 @@ const Login = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full p-3 pl-10 pr-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     placeholder={t.passwordPlaceholder}
+                    required
                   />
                   <button 
                     type="button" 
@@ -178,8 +297,11 @@ const Login = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       id="confirmPassword"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full p-3 pl-10 pr-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       placeholder={t.confirmPasswordPlaceholder}
+                      required={!isLogin}
                     />
                   </div>
                 </div>
@@ -195,8 +317,12 @@ const Login = () => {
 
               <button
                 type="submit"
-                className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors hover-lift shadow-sm"
+                disabled={loading}
+                className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors hover-lift shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
+                {loading ? (
+                  <span className="inline-block animate-spin mr-2">⟳</span>
+                ) : null}
                 {isLogin ? t.loginButton : t.registerButton}
               </button>
             </form>

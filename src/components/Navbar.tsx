@@ -1,189 +1,191 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, Languages } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [language, setLanguage] = useState<"english" | "hindi">("english");
   const location = useLocation();
-
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const closeMenu = () => setIsOpen(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
-  };
-
-  const toggleLanguage = () => {
-    const newLanguage = language === "english" ? "hindi" : "english";
-    setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
-    
-    // Dispatch event for other components to listen to
-    window.dispatchEvent(new CustomEvent('languageChange', { 
-      detail: { language: newLanguage }
-    }));
-  };
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
-    // Check for saved theme preference or use system preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add('dark');
-      setIsDarkMode(true);
-    }
-
-    // Check for saved language preference
     const savedLanguage = localStorage.getItem('language');
     if (savedLanguage === 'hindi') {
       setLanguage('hindi');
     }
 
-    // Add scroll event listener
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+    const handleLanguageChange = (e: CustomEvent) => {
+      setLanguage(e.detail.language);
     };
 
-    // Language change listener
-    const handleLanguageChange = (e: any) => {
-      if (e.detail && e.detail.language) {
-        setLanguage(e.detail.language);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('languageChange', handleLanguageChange);
-    
+    window.addEventListener('languageChange', handleLanguageChange as EventListener);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('languageChange', handleLanguageChange);
+      window.removeEventListener('languageChange', handleLanguageChange as EventListener);
     };
   }, []);
 
-  const navLinks = [
-    { name: language === "english" ? "Home" : "होम", path: "/" },
-    { name: language === "english" ? "Storage" : "भंडारण", path: "/storage" },
-    { name: language === "english" ? "Transportation" : "परिवहन", path: "/transportation" },
-    { name: language === "english" ? "Crop Processing" : "फसल प्रसंस्करण", path: "/crop-processing" },
-    { name: language === "english" ? "Crop Prediction" : "फसल भविष्यवाणी", path: "/crop-prediction" },
-    { name: language === "english" ? "Government Schemes" : "सरकारी योजनाएं", path: "/government-schemes" },
-    { name: language === "english" ? "Contact" : "संपर्क", path: "/contact" }
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success(language === "english" ? "Logged out successfully" : "सफलतापूर्वक लॉग आउट हो गया");
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path
+      ? "text-primary font-medium"
+      : "text-foreground/80 hover:text-primary transition-colors";
+  };
+
+  const translations = {
+    english: {
+      home: "Home",
+      cropPrediction: "Crop Prediction",
+      storage: "Storage",
+      transportation: "Transportation",
+      cropProcessing: "Crop Processing",
+      schemes: "Government Schemes",
+      contact: "Contact Us",
+      login: "Login",
+      logout: "Logout",
+      profile: "Profile",
+    },
+    hindi: {
+      home: "होम",
+      cropPrediction: "फसल भविष्यवाणी",
+      storage: "भंडारण",
+      transportation: "परिवहन",
+      cropProcessing: "फसल प्रसंस्करण",
+      schemes: "सरकारी योजनाएँ",
+      contact: "संपर्क करें",
+      login: "लॉग इन",
+      logout: "लॉग आउट",
+      profile: "प्रोफ़ाइल",
+    },
+  };
+
+  const t = language === "english" ? translations.english : translations.hindi;
+
+  const menuItems = [
+    { title: t.home, path: "/" },
+    { title: t.cropPrediction, path: "/crop-prediction" },
+    { title: t.storage, path: "/storage" },
+    { title: t.transportation, path: "/transportation" },
+    { title: t.cropProcessing, path: "/crop-processing" },
+    { title: t.schemes, path: "/government-schemes" },
+    { title: t.contact, path: "/contact" },
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center" onClick={closeMenu}>
-              <span className="text-2xl font-bold text-primary mr-2">
-                Agri<span className="text-secondary-foreground">Sarthi</span>
-              </span>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      <div className="px-4 mx-auto max-w-7xl">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
+              <span className="text-2xl font-bold text-primary brand-name">AgriSarthi</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
-            {navLinks.map((link) => (
+          <nav className="hidden md:flex md:items-center md:space-x-6 nav-menu">
+            {menuItems.map((item) => (
               <Link
-                key={link.name}
-                to={link.path}
-                className={`text-sm lg:text-base font-medium transition-colors hover:text-primary px-2 py-2 rounded-md relative group ${
-                  location.pathname === link.path
-                    ? "text-primary"
-                    : "text-foreground/80 hover:text-primary"
-                }`}
+                key={item.path}
+                to={item.path}
+                className={`${isActive(item.path)} text-sm`}
               >
-                {link.name}
-                <span className={`absolute inset-x-0 bottom-0 h-0.5 bg-primary transform transition-transform origin-left ${
-                  location.pathname === link.path ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                }`}></span>
+                {item.title}
               </Link>
             ))}
+            
+            {user ? (
+              <div className="relative group">
+                <button className="flex items-center gap-1 text-sm text-foreground/80 hover:text-primary transition-colors">
+                  <User size={16} className="mr-1" />
+                  <span>{user.email?.split('@')[0]}</span>
+                  <ChevronDown size={16} />
+                </button>
+                <div className="absolute right-0 hidden pt-2 group-hover:block">
+                  <div className="w-48 py-2 bg-card border border-border rounded-md shadow-lg">
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-muted/50 transition-colors"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      {t.logout}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-2 text-sm text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
+              >
+                {t.login}
+              </Link>
+            )}
           </nav>
 
-          {/* Login, Theme Toggle Button and Mobile Menu Toggle */}
-          <div className="flex items-center">
-            <Link 
-              to="/login" 
-              className="mr-3 text-foreground/80 hover:text-primary rounded-lg transition-colors px-3 py-2 hidden md:block"
-            >
-              {language === "english" ? "Login" : "लॉगिन"}
-            </Link>
-
-            <button
-              onClick={toggleLanguage}
-              className="p-2 mr-3 text-foreground/80 hover:text-primary rounded-full transition-colors"
-              aria-label="Toggle language"
-            >
-              <Languages size={20} />
-            </button>
-
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 mr-3 text-foreground/80 hover:text-primary rounded-full transition-colors"
-              aria-label="Toggle dark mode"
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-
+          <div className="flex md:hidden">
             <button
               onClick={toggleMenu}
-              className="md:hidden p-2 rounded-md text-foreground/80 hover:text-primary"
-              aria-label="Toggle mobile menu"
+              className="inline-flex items-center justify-center p-2 text-foreground rounded-md hover:bg-muted/50 focus:outline-none"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      <div
-        className={`md:hidden transition-all duration-300 overflow-hidden ${
-          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-        }`}
-        aria-hidden={!isOpen}
-      >
-        <div className="glass-morphism mx-4 my-2 rounded-xl overflow-hidden animate-slide-in-bottom">
-          <nav className="flex flex-col space-y-1 p-4">
-            {navLinks.map((link) => (
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-background border-b border-border">
+            {menuItems.map((item) => (
               <Link
-                key={link.name}
-                to={link.path}
-                className={`px-4 py-3 rounded-lg transition-colors ${
-                  location.pathname === link.path
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "hover:bg-primary/5 text-foreground/80"
-                }`}
-                onClick={closeMenu}
+                key={item.path}
+                to={item.path}
+                className={`${
+                  isActive(item.path)
+                } block px-3 py-2 rounded-md text-base font-medium`}
+                onClick={toggleMenu}
               >
-                {link.name}
+                {item.title}
               </Link>
             ))}
-            <Link
-              to="/login"
-              className="px-4 py-3 rounded-lg transition-colors hover:bg-primary/5 text-foreground/80"
-              onClick={closeMenu}
-            >
-              {language === "english" ? "Login" : "लॉगिन"}
-            </Link>
-          </nav>
+            
+            {user ? (
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  toggleMenu();
+                }}
+                className="flex items-center w-full px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+              >
+                <LogOut size={16} className="mr-2" />
+                {t.logout}
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="block px-3 py-2 text-base font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
+                onClick={toggleMenu}
+              >
+                {t.login}
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 };

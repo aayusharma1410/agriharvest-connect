@@ -1,44 +1,54 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import CropProcessing from "./pages/CropProcessing";
+import Login from "./pages/Login";
 import Index from "./pages/Index";
-import Storage from "./pages/Storage";
-import Transportation from "./pages/Transportation";
 import NotFound from "./pages/NotFound";
 import CropPrediction from "./pages/CropPrediction";
 import GovernmentSchemes from "./pages/GovernmentSchemes";
+import Transportation from "./pages/Transportation";
 import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import CropProcessing from "./pages/CropProcessing";
-import ChatBot from "./components/ChatBot";
+import Storage from "./pages/Storage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import "./App.css";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/storage" element={<Storage />} />
-          <Route path="/transportation" element={<Transportation />} />
-          <Route path="/crop-prediction" element={<CropPrediction />} />
-          <Route path="/crop-processing" element={<CropProcessing />} />
-          <Route path="/government-schemes" element={<GovernmentSchemes />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<Login />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <ChatBot />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/contact" element={<Contact />} />
+      
+      {/* Protected Routes */}
+      <Route path="/crop-prediction" element={
+        <ProtectedRoute>
+          <CropPrediction />
+        </ProtectedRoute>
+      } />
+      <Route path="/storage" element={
+        <ProtectedRoute>
+          <Storage />
+        </ProtectedRoute>
+      } />
+      <Route path="/transportation" element={
+        <ProtectedRoute>
+          <Transportation />
+        </ProtectedRoute>
+      } />
+      <Route path="/crop-processing" element={
+        <ProtectedRoute>
+          <CropProcessing />
+        </ProtectedRoute>
+      } />
+      <Route path="/government-schemes" element={
+        <ProtectedRoute>
+          <GovernmentSchemes />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
 
 export default App;
