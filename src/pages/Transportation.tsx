@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Search, MapPin, Truck, Calendar, Clock, CreditCard, Filter, ArrowRight, User, Star } from "lucide-react";
 import Navbar from "../components/Navbar";
@@ -62,7 +61,6 @@ const Transportation = () => {
       viewRequests: "View Requests",
       createRequest: "Create Request",
       vehicleCapacity: "Capacity",
-      vehicleType: "Vehicle Type",
       costPerKm: "Cost per km",
       contactNow: "Contact Now",
       viewDetails: "View Details",
@@ -106,7 +104,6 @@ const Transportation = () => {
       viewRequests: "अनुरोध देखें",
       createRequest: "अनुरोध बनाएं",
       vehicleCapacity: "क्षमता",
-      vehicleType: "वाहन प्रकार",
       costPerKm: "प्रति किमी लागत",
       contactNow: "अभी संपर्क करें",
       viewDetails: "विवरण देखें",
