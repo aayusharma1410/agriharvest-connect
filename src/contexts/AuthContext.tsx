@@ -9,6 +9,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  resendConfirmationEmail: (email: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,11 +68,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Verification email resent. Please check your inbox.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to resend verification email');
+      console.error('Error resending verification email:', error);
+    }
+  };
+
   const value = {
     session,
     user,
     loading,
-    signOut
+    signOut,
+    resendConfirmationEmail
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

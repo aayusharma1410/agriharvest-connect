@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, Languages, User, Key, Eye, EyeOff, Phone } from "lucide-react";
+import { ChevronLeft, Languages, User, Key, Eye, EyeOff, Phone, Mail } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -15,6 +15,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   
   const navigate = useNavigate();
   
@@ -44,6 +45,7 @@ const Login = () => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setShowEmailConfirmation(false);
   };
 
   const toggleLanguage = () => {
@@ -61,6 +63,29 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
   
+  const handleResendConfirmationEmail = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+      
+      if (error) throw error;
+      
+      toast.success(
+        language === "english" 
+          ? "Confirmation email sent! Please check your inbox." 
+          : "पुष्टिकरण ईमेल भेजा गया! कृपया अपना इनबॉक्स देखें।"
+      );
+    } catch (error: any) {
+      toast.error(error.message || (language === "english" ? "Failed to resend confirmation email" : "पुष्टिकरण ईमेल पुनः भेजने में विफल"));
+      console.error("Resend confirmation error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -73,7 +98,18 @@ const Login = () => {
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          // Special handling for "Email not confirmed" error
+          if (error.message === "Email not confirmed" || error.code === "email_not_confirmed") {
+            setShowEmailConfirmation(true);
+            throw new Error(
+              language === "english" 
+                ? "Please confirm your email before logging in" 
+                : "लॉगिन करने से पहले कृपया अपने ईमेल की पुष्टि करें"
+            );
+          }
+          throw error;
+        }
         
         if (data.session) {
           toast.success(language === "english" ? "Login successful!" : "लॉगिन सफल!");
@@ -100,6 +136,7 @@ const Login = () => {
         
         if (error) throw error;
         
+        setShowEmailConfirmation(true);
         toast.success(
           language === "english" 
             ? "Registration successful! Please verify your email." 
@@ -146,6 +183,12 @@ const Login = () => {
       emailPlaceholder: "Enter your email address",
       passwordPlaceholder: "Enter your password",
       confirmPasswordPlaceholder: "Confirm your password",
+      emailNotConfirmed: "Email verification required",
+      emailNotConfirmedText: "Please check your inbox and verify your email to continue.",
+      resendEmail: "Resend verification email",
+      didntReceiveEmail: "Didn't receive the email?",
+      tryAgain: "Try again",
+      backToLogin: "Back to login"
     },
     hindi: {
       backToHome: "होम पेज पर वापस जाएं",
@@ -172,6 +215,12 @@ const Login = () => {
       emailPlaceholder: "अपना ईमेल पता दर्ज करें",
       passwordPlaceholder: "अपना पासवर्ड दर्ज करें",
       confirmPasswordPlaceholder: "अपने पासवर्ड की पुष्टि करें",
+      emailNotConfirmed: "ईमेल सत्यापन आवश्यक है",
+      emailNotConfirmedText: "जारी रखने के लिए कृपया अपना इनबॉक्स देखें और अपने ईमेल को सत्यापित करें।",
+      resendEmail: "सत्यापन ईमेल पुनः भेजें",
+      didntReceiveEmail: "ईमेल प्राप्त नहीं हुआ?",
+      tryAgain: "पुनः प्रयास करें",
+      backToLogin: "लॉगिन पेज पर वापस जाएँ"
     }
   };
 
@@ -204,128 +253,160 @@ const Login = () => {
             </div>
             <p className="text-muted-foreground mb-8">{t.subtitle}</p>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              {!isLogin && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium mb-1" htmlFor="name">
-                    {t.name}
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      placeholder={t.namePlaceholder}
-                      required={!isLogin}
-                    />
+            {showEmailConfirmation ? (
+              <div className="space-y-6 py-2">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <Mail className="h-8 w-8 text-primary" />
                   </div>
+                  <h2 className="text-xl font-semibold mb-2">{t.emailNotConfirmed}</h2>
+                  <p className="text-muted-foreground">{t.emailNotConfirmedText}</p>
                 </div>
-              )}
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium mb-1" htmlFor="email">
-                  {t.email}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    placeholder={t.emailPlaceholder}
-                    required
-                  />
-                </div>
-              </div>
-              
-              {!isLogin && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium mb-1" htmlFor="phone">
-                    {t.phone}
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                      type="tel"
-                      id="phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      placeholder={t.phonePlaceholder}
-                      required={!isLogin}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium mb-1" htmlFor="password">
-                  {t.password}
-                </label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-3 pl-10 pr-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    placeholder={t.passwordPlaceholder}
-                    required
-                  />
-                  <button 
-                    type="button" 
-                    onClick={togglePasswordVisibility} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                
+                <div className="border-t border-border pt-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-4">{t.didntReceiveEmail}</p>
+                  <button
+                    onClick={handleResendConfirmationEmail}
+                    disabled={loading}
+                    className="w-full bg-primary/10 text-primary py-3 rounded-lg hover:bg-primary/20 transition-colors mb-3"
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {loading ? (
+                      <span className="inline-block animate-spin mr-2">⟳</span>
+                    ) : null}
+                    {t.resendEmail}
+                  </button>
+                  <button
+                    onClick={() => setShowEmailConfirmation(false)}
+                    className="w-full border border-border py-3 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    {t.backToLogin}
                   </button>
                 </div>
               </div>
-              {!isLogin && (
+            ) : (
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium mb-1" htmlFor="name">
+                      {t.name}
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        placeholder={t.namePlaceholder}
+                        required={!isLogin}
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium mb-1" htmlFor="confirmPassword">
-                    {t.confirmPassword}
+                  <label className="block text-sm font-medium mb-1" htmlFor="email">
+                    {t.email}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      placeholder={t.emailPlaceholder}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium mb-1" htmlFor="phone">
+                      {t.phone}
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="tel"
+                        id="phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full p-3 pl-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        placeholder={t.phonePlaceholder}
+                        required={!isLogin}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium mb-1" htmlFor="password">
+                    {t.password}
                   </label>
                   <div className="relative">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <input
                       type={showPassword ? "text" : "password"}
-                      id="confirmPassword"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       className="w-full p-3 pl-10 pr-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      placeholder={t.confirmPasswordPlaceholder}
-                      required={!isLogin}
+                      placeholder={t.passwordPlaceholder}
+                      required
                     />
+                    <button 
+                      type="button" 
+                      onClick={togglePasswordVisibility} 
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                   </div>
                 </div>
-              )}
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium mb-1" htmlFor="confirmPassword">
+                      {t.confirmPassword}
+                    </label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full p-3 pl-10 pr-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        placeholder={t.confirmPasswordPlaceholder}
+                        required={!isLogin}
+                      />
+                    </div>
+                  </div>
+                )}
 
-              {isLogin && (
-                <div className="flex justify-end">
-                  <a href="#" className="text-sm text-primary hover:underline transition-colors">
-                    {t.forgotPassword}
-                  </a>
-                </div>
-              )}
+                {isLogin && (
+                  <div className="flex justify-end">
+                    <a href="#" className="text-sm text-primary hover:underline transition-colors">
+                      {t.forgotPassword}
+                    </a>
+                  </div>
+                )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors hover-lift shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <span className="inline-block animate-spin mr-2">⟳</span>
-                ) : null}
-                {isLogin ? t.loginButton : t.registerButton}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors hover-lift shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <span className="inline-block animate-spin mr-2">⟳</span>
+                  ) : null}
+                  {isLogin ? t.loginButton : t.registerButton}
+                </button>
+              </form>
+            )}
 
             <div className="mt-8 text-center">
               {isLogin ? (
