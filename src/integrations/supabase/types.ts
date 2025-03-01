@@ -9,7 +9,149 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone_number?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      storage_facilities: {
+        Row: {
+          capacity: number | null
+          contact_info: string | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transportation_providers: {
+        Row: {
+          capacity: number | null
+          contact_info: string
+          created_at: string
+          id: string
+          name: string
+          rates: string | null
+          service_area: string | null
+          updated_at: string
+          vehicle_type: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          contact_info: string
+          created_at?: string
+          id?: string
+          name: string
+          rates?: string | null
+          service_area?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          contact_info?: string
+          created_at?: string
+          id?: string
+          name?: string
+          rates?: string | null
+          service_area?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Relationships: []
+      }
+      user_crops: {
+        Row: {
+          created_at: string
+          crop_name: string
+          description: string | null
+          expected_harvest_date: string | null
+          id: string
+          planting_date: string | null
+          quantity: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          description?: string | null
+          expected_harvest_date?: string | null
+          id?: string
+          planting_date?: string | null
+          quantity?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          description?: string | null
+          expected_harvest_date?: string | null
+          id?: string
+          planting_date?: string | null
+          quantity?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_crops_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
