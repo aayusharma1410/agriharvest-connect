@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle, Share2, Users } from "lucide-react";
 import Navbar from "../components/Navbar";
@@ -7,6 +8,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
 import { Database } from "../integrations/supabase/types";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import { Input } from "../components/ui/input";
 
 type StorageFacility = Database['public']['Tables']['storage_facilities']['Row'];
 
@@ -701,4 +705,294 @@ const Storage = () => {
                       </button>
                     </div>
                     
-                    {
+                    {analysisResult && (
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Recommended Storage</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-2xl font-semibold text-primary mb-2">{analysisResult.recommendedStorageType}</p>
+                            <p className="text-muted-foreground">Based on crop type, harvest date, and quantity</p>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Temperature Range</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex items-center">
+                            <Thermometer className="h-8 w-8 text-orange-500 mr-3" />
+                            <div>
+                              <p className="text-2xl font-semibold">{analysisResult.temperatureRange}</p>
+                              <p className="text-muted-foreground">Maintain consistently</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Humidity Range</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex items-center">
+                            <Droplets className="h-8 w-8 text-blue-500 mr-3" />
+                            <div>
+                              <p className="text-2xl font-semibold">{analysisResult.humidityRange}</p>
+                              <p className="text-muted-foreground">For optimal preservation</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Estimated Shelf Life</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex items-center">
+                            <Clock className="h-8 w-8 text-green-500 mr-3" />
+                            <div>
+                              <p className="text-2xl font-semibold">{analysisResult.estimatedShelfLife}</p>
+                              <p className="text-muted-foreground">Under optimal conditions</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Transportation Method</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-xl font-semibold">{analysisResult.transportationMethod}</p>
+                            <p className="text-muted-foreground">Based on quantity and type</p>
+                          </CardContent>
+                        </Card>
+                        
+                        {analysisResult.storageWarnings && (
+                          <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-lg flex items-center text-amber-700 dark:text-amber-400">
+                                <AlertCircle className="h-5 w-5 mr-2" />
+                                Special Considerations
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-amber-700 dark:text-amber-400">{analysisResult.storageWarnings}</p>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="mt-8">
+                      <Button 
+                        onClick={() => setShowSharingOptions(!showSharingOptions)} 
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share Analysis
+                      </Button>
+                      
+                      {showSharingOptions && (
+                        <div className="mt-4 p-4 bg-background rounded-lg border border-border">
+                          <p className="mb-3 text-sm font-medium">Share this analysis with:</p>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button variant="outline" size="sm">Storage Provider</Button>
+                            <Button variant="outline" size="sm">Transportation Partner</Button>
+                            <Button variant="outline" size="sm">Co-operative</Button>
+                            <Button variant="outline" size="sm">Export Agency</Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+                    <h3 className="text-xl font-medium mb-6">Recommended Storage Facilities</h3>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {storageOptionsFromDB.slice(0, 3).map((option) => (
+                        <div key={option.id} className="bg-background rounded-lg border border-border overflow-hidden hover:shadow-md transition-all">
+                          <div className="p-4">
+                            <h4 className="font-medium">{option.name}</h4>
+                            <div className="text-sm text-muted-foreground mb-2">{option.location} ({option.distance})</div>
+                            <div className="flex items-center text-sm mb-1">
+                              <Thermometer className="h-3 w-3 text-primary mr-1" />
+                              <span>{option.temperature}</span>
+                            </div>
+                            <div className="flex items-center text-sm">
+                              <Clock className="h-3 w-3 text-primary mr-1" />
+                              <span>{option.capacity}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Button size="sm" variant="outline" className="w-full">Contact</Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Storage Sharing Tab */}
+          {activeTab === "sharing" && (
+            <div className="animate-fade-in">
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">Community Storage Sharing</h2>
+              <p className="text-muted-foreground mb-8">
+                Find other farmers to share storage costs or offer your unused storage space to others.
+                Our platform helps you connect with nearby farmers for cooperative storage solutions.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-8 mb-10">
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient">
+                  <h3 className="text-xl font-medium mb-4">Looking for Storage Space</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Find farmers offering unused storage space at a lower cost than commercial facilities.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Crop Type</label>
+                      <select className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                        <option value="">Select crop type</option>
+                        <option value="grains">Grains</option>
+                        <option value="cereals">Cereals</option>
+                        <option value="pulses">Pulses</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Quantity (kg)</label>
+                        <Input type="number" placeholder="Enter quantity" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Duration</label>
+                        <select className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                          <option value="1-week">1 week</option>
+                          <option value="2-weeks">2 weeks</option>
+                          <option value="1-month">1 month</option>
+                          <option value="3-months">3 months</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Location</label>
+                      <div className="relative">
+                        <Input 
+                          type="text" 
+                          placeholder="Enter your location" 
+                          className="pl-10" 
+                        />
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                    
+                    <Button className="w-full">Find Shared Storage</Button>
+                  </div>
+                </div>
+                
+                <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm card-gradient">
+                  <h3 className="text-xl font-medium mb-4">Offer Your Storage Space</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Have unused storage capacity? Offer it to other farmers and earn additional income.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Storage Type</label>
+                      <select className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                        <option value="">Select storage type</option>
+                        <option value="cold-storage">Cold Storage</option>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="silo">Grain Silo</option>
+                        <option value="barn">Traditional Barn</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Available Capacity (kg)</label>
+                        <Input type="number" placeholder="Enter capacity" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Rate (₹/kg/month)</label>
+                        <Input type="number" placeholder="Enter rate" />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Availability Period</label>
+                      <select className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                        <option value="1-month">1 month</option>
+                        <option value="3-months">3 months</option>
+                        <option value="6-months">6 months</option>
+                        <option value="custom">Custom Period</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Description</label>
+                      <textarea
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all min-h-[80px]"
+                        placeholder="Describe your storage space, features, and any restrictions"
+                      ></textarea>
+                    </div>
+                    
+                    <Button className="w-full">List Your Storage</Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-primary/5 rounded-xl p-6 md:p-8 success-gradient">
+                <h3 className="text-xl font-medium mb-4">Active Storage Sharing Listings</h3>
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((item) => (
+                    <Card key={item}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Warehouse Space in Nashik</CardTitle>
+                        <CardDescription>Posted by Farmer Cooperative</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Capacity:</span>
+                            <span className="font-medium">5000 kg</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Rate:</span>
+                            <span className="font-medium">₹2.5/kg/month</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Duration:</span>
+                            <span className="font-medium">3 months</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Storage Type:</span>
+                            <span className="font-medium">Dry Warehouse</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="outline" className="w-full">Contact Lister</Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+      <ChatBot />
+    </div>
+  );
+};
+
+export default Storage;
