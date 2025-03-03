@@ -1,4 +1,4 @@
-<lov-code>
+
 import { useState, useEffect } from "react";
 import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle, Share2, Users } from "lucide-react";
 import Navbar from "../components/Navbar";
@@ -709,4 +709,313 @@ const Storage = () => {
                         value={cropVariety}
                         onChange={(e) => setCropVariety(e.target.value)}
                         placeholder="E.g. Basmati Rice, Alphonso Mango"
-                        className="w-full py-2 px
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Quantity (kg)</label>
+                      <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        placeholder="Enter quantity"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Harvest Date</label>
+                      <input
+                        type="date"
+                        value={harvestDate}
+                        onChange={(e) => setHarvestDate(e.target.value)}
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium mb-2">Pesticides Used (if any)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {pesticidesUsed.map((pesticide, index) => (
+                        <div key={index} className="bg-muted px-3 py-1 rounded-lg flex items-center">
+                          <span className="text-sm">{pesticide}</span>
+                          <button 
+                            onClick={() => handleRemovePesticide(index)}
+                            className="ml-2 text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="pesticide-select"
+                        className="flex-grow py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddPesticide(e.target.value);
+                            e.target.value = "";
+                          }
+                        }}
+                      >
+                        <option value="">Select pesticide</option>
+                        {pesticideOptions.map((option, index) => (
+                          <option key={index} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={() => {
+                          const select = document.querySelector('select[aria-label="pesticide-select"]') as HTMLSelectElement;
+                          if (select && select.value) {
+                            handleAddPesticide(select.value);
+                            select.value = "";
+                          }
+                        }}
+                        className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex justify-center">
+                    <button 
+                      onClick={analyzeCrop}
+                      className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift"
+                    >
+                      <Zap className="inline-block mr-2 h-5 w-5" />
+                      Analyze Crop
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm success-gradient">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-xl font-medium mb-6">Analysis Results for {cropVariety || cropType}</h3>
+                      <button 
+                        onClick={() => setShowAnalysis(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Back to Analysis
+                      </button>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-white/40 dark:bg-gray-900/40 p-4 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                            <Thermometer className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Recommended Storage Type</h4>
+                            <p>{analysisResult?.recommendedStorageType}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white/40 dark:bg-gray-900/40 p-4 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                            <Thermometer className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Temperature Range</h4>
+                            <p>{analysisResult?.temperatureRange}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white/40 dark:bg-gray-900/40 p-4 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                            <Droplets className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Humidity Range</h4>
+                            <p>{analysisResult?.humidityRange}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white/40 dark:bg-gray-900/40 p-4 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                            <Clock className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Estimated Shelf Life</h4>
+                            <p>{analysisResult?.estimatedShelfLife}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white/40 dark:bg-gray-900/40 p-4 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                            <MapPin className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Recommended Transportation</h4>
+                            <p>{analysisResult?.transportationMethod}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {analysisResult?.storageWarnings && (
+                        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                          <div className="flex items-center mb-3">
+                            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400 mr-3">
+                              <AlertCircle className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-red-700 dark:text-red-400">Storage Warnings</h4>
+                              <p className="text-red-600 dark:text-red-300">{analysisResult.storageWarnings}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-8 text-center">
+                      <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
+                        Find Suitable Storage Facilities
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Storage Sharing Tab */}
+          {activeTab === "sharing" && (
+            <div className="animate-fade-in">
+              <h2 className="text-2xl md:text-3xl font-medium mb-6">Storage Sharing Platform</h2>
+              <p className="text-muted-foreground mb-8">
+                Connect with other farmers to share storage space and reduce costs. 
+                Find available shared storage or list your own unused capacity.
+              </p>
+              
+              <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm mb-8 card-gradient">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                  <div>
+                    <h3 className="text-xl font-medium mb-2">Find Shared Storage</h3>
+                    <p className="text-muted-foreground">
+                      Browse available shared storage facilities from other farmers in your area.
+                    </p>
+                  </div>
+                  <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift self-start md:self-center">
+                    <Users className="inline-block mr-2 h-5 w-5" />
+                    Find Shared Storage
+                  </button>
+                </div>
+                
+                <div className="border-t border-border pt-6">
+                  <h3 className="text-xl font-medium mb-4">Offer Your Storage Space</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Have unused storage capacity? Share it with other farmers to offset costs.
+                  </p>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Storage Type</label>
+                      <select className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                        <option value="">Select storage type</option>
+                        <option value="cold">Cold Storage</option>
+                        <option value="dry">Dry Warehouse</option>
+                        <option value="controlled">Controlled Atmosphere</option>
+                        <option value="silo">Grain Silo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Available Capacity (kg/sq.ft)</label>
+                      <input
+                        type="number"
+                        placeholder="Enter available capacity"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Location</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Enter location"
+                          className="w-full py-2 pl-10 pr-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        />
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Price (₹ per kg/month)</label>
+                      <input
+                        type="number"
+                        placeholder="Enter price"
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 text-right">
+                    <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors hover-lift">
+                      List Your Storage Space
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-medium mb-4">Sharing Benefits</h3>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift card-gradient">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4">
+                      <Leaf className="h-6 w-6" />
+                    </div>
+                    <h4 className="text-lg font-medium mb-2">Cost Efficiency</h4>
+                    <p className="text-muted-foreground">
+                      Reduce storage costs by sharing expenses with other farmers or earning from unused capacity.
+                    </p>
+                  </div>
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift card-gradient">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4">
+                      <Users className="h-6 w-6" />
+                    </div>
+                    <h4 className="text-lg font-medium mb-2">Community Building</h4>
+                    <p className="text-muted-foreground">
+                      Connect with other farmers in your region and build collaborative relationships.
+                    </p>
+                  </div>
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm hover-lift card-gradient">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4">
+                      <Zap className="h-6 w-6" />
+                    </div>
+                    <h4 className="text-lg font-medium mb-2">Optimal Utilization</h4>
+                    <p className="text-muted-foreground">
+                      Ensure maximum utilization of available storage infrastructure across farming communities.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+      <ChatBot />
+      
+      {/* Storage Facility Details Dialog */}
+      {selectedFacility && (
+        <StorageFacilityDetails 
+          facility={selectedFacility}
+          isOpen={isDetailDialogOpen}
+          onClose={() => setIsDetailDialogOpen(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default Storage;
