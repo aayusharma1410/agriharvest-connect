@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle, Share2, Users } from "lucide-react";
+import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle, Share2, Users, Box, Archive, Info } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ChatBot from "../components/ChatBot";
@@ -14,6 +14,59 @@ import { Input } from "../components/ui/input";
 import StorageFacilityDetails from "../components/StorageFacilityDetails";
 
 type StorageFacility = Database['public']['Tables']['storage_facilities']['Row'];
+
+const sampleStorageFacilities = [
+  {
+    id: "1",
+    name: "Cold Storage Express",
+    location: "Delhi NCR",
+    description: "State-of-the-art refrigerated storage facility with advanced temperature control systems. Ideal for perishable fruits, vegetables, and dairy products. Our facility includes backup power systems and 24/7 monitoring.",
+    contact_info: "+91 98765 43210",
+    capacity: 5000,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "2",
+    name: "Punjab Grain Warehouse",
+    location: "Ludhiana, Punjab",
+    description: "Large-scale grain storage facility with moisture control and pest management. Specialized in wheat, rice, and other cereal storage with long-term preservation capabilities.",
+    contact_info: "+91 87654 32109",
+    capacity: 10000,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "3",
+    name: "Fresh Valley Cold Chain",
+    location: "Nashik, Maharashtra",
+    description: "Specialized storage for grapes, onions, and other regional produce. Temperature zones range from 0°C to 15°C with controlled atmosphere storage options.",
+    contact_info: "+91 76543 21098",
+    capacity: 3000,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "4",
+    name: "Green Harvest Storage",
+    location: "Bangalore, Karnataka",
+    description: "Eco-friendly storage facility powered by solar energy. Offers both cold storage and dry warehousing options with organic certification compliance.",
+    contact_info: "+91 65432 10987",
+    capacity: 2500,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "5",
+    name: "Eastern Spice Warehouse",
+    location: "Kolkata, West Bengal",
+    description: "Specialized storage for spices and aromatic products with humidity control and aroma isolation. Designed to maintain essential oils and flavor compounds in stored products.",
+    contact_info: "+91 54321 09876",
+    capacity: 1500,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
 
 const Storage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -37,82 +90,37 @@ const Storage = () => {
   useEffect(() => {
     setIsLoaded(true);
     
-    // Create sample storage facilities if none exist
-    const createSampleFacilities = async () => {
+    // Try to fetch storage facilities from the database first
+    const fetchStorageFacilities = async () => {
       try {
         setLoading(true);
-        
-        // First check if we already have facilities
-        const { data: existingData, error: checkError } = await supabase
+        const { data, error } = await supabase
           .from('storage_facilities')
           .select('*');
         
-        if (checkError) throw checkError;
-        
-        // If we have less than 5 facilities, add sample ones
-        if (!existingData || existingData.length < 5) {
-          // Sample facilities data
-          const sampleFacilities = [
-            {
-              name: "Cold Storage Express",
-              location: "Delhi NCR",
-              description: "State-of-the-art refrigerated storage facility with advanced temperature control systems. Ideal for perishable fruits, vegetables, and dairy products. Our facility includes backup power systems and 24/7 monitoring.",
-              contact_info: "+91 98765 43210",
-              capacity: 5000
-            },
-            {
-              name: "Punjab Grain Warehouse",
-              location: "Ludhiana, Punjab",
-              description: "Large-scale grain storage facility with moisture control and pest management. Specialized in wheat, rice, and other cereal storage with long-term preservation capabilities.",
-              contact_info: "+91 87654 32109",
-              capacity: 10000
-            },
-            {
-              name: "Fresh Valley Cold Chain",
-              location: "Nashik, Maharashtra",
-              description: "Specialized storage for grapes, onions, and other regional produce. Temperature zones range from 0°C to 15°C with controlled atmosphere storage options.",
-              contact_info: "+91 76543 21098",
-              capacity: 3000
-            },
-            {
-              name: "Green Harvest Storage",
-              location: "Bangalore, Karnataka",
-              description: "Eco-friendly storage facility powered by solar energy. Offers both cold storage and dry warehousing options with organic certification compliance.",
-              contact_info: "+91 65432 10987",
-              capacity: 2500
-            },
-            {
-              name: "Eastern Spice Warehouse",
-              location: "Kolkata, West Bengal",
-              description: "Specialized storage for spices and aromatic products with humidity control and aroma isolation. Designed to maintain essential oils and flavor compounds in stored products.",
-              contact_info: "+91 54321 09876",
-              capacity: 1500
-            }
-          ];
-          
-          // Insert sample facilities one by one to ensure all are added
-          for (const facility of sampleFacilities) {
-            const { error: insertError } = await supabase
-              .from('storage_facilities')
-              .insert([facility]);
-            
-            if (insertError) console.error("Error adding sample facility:", insertError);
-          }
-          
-          // Fetch the updated facilities
-          fetchStorageFacilities();
+        if (error) {
+          console.error('Error fetching from database:', error);
+          // If fetching fails, use sample data instead
+          setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
+        } else if (data && data.length > 0) {
+          // Use database data if available
+          setStorageFacilities(data);
         } else {
-          setStorageFacilities(existingData);
-          setLoading(false);
+          // Use sample data if no database data
+          setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
+          console.log("Using sample storage facilities as no database entries were found");
         }
       } catch (error: any) {
-        toast.error(`Error setting up storage facilities: ${error.message}`);
-        console.error('Error:', error);
+        console.error('Error fetching storage facilities:', error);
+        toast.error(`Error fetching storage facilities: ${error.message}`);
+        // Fall back to sample data on any error
+        setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
+      } finally {
         setLoading(false);
       }
     };
     
-    createSampleFacilities();
+    fetchStorageFacilities();
   }, []);
 
   const fetchStorageFacilities = async () => {
@@ -176,6 +184,16 @@ const Storage = () => {
       ? ["fruits", "vegetables"] 
       : ["grains", "cereals", "pulses"];
     
+    // Select an appropriate icon based on facility type
+    let FacilityIcon = Box;
+    if (facility.name.includes('Cold')) {
+      FacilityIcon = Thermometer;
+    } else if (facility.name.includes('Warehouse')) {
+      FacilityIcon = Archive;
+    } else if (facility.name.includes('Silo')) {
+      FacilityIcon = Box;
+    }
+    
     return {
       id: facility.id,
       name: facility.name,
@@ -190,7 +208,8 @@ const Storage = () => {
       sharingAvailable: index % 2 === 0, // Alternate facilities have sharing
       location: facility.location,
       contactInfo: facility.contact_info || 'Contact information not available',
-      description: facility.description || 'No description available'
+      description: facility.description || 'No description available',
+      icon: FacilityIcon
     };
   });
 
@@ -478,9 +497,9 @@ const Storage = () => {
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {storageOptionsFromDB.map((option) => (
-                      <div 
+                      <Card 
                         key={option.id} 
-                        className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all hover-lift cursor-pointer"
+                        className="overflow-hidden shadow-sm hover:shadow-md transition-all hover-lift cursor-pointer"
                         onClick={() => handleFacilityClick(option)}
                       >
                         <div className="h-48 overflow-hidden">
@@ -490,19 +509,21 @@ const Storage = () => {
                             className="w-full h-full object-cover transition-transform hover:scale-105"
                           />
                         </div>
-                        <div className="p-5">
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="text-lg font-medium">{option.name}</h4>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg">{option.name}</CardTitle>
                             <div className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-md text-sm font-medium">
                               {option.rating} ★
                             </div>
                           </div>
-                          
-                          <div className="flex items-center text-muted-foreground mb-3">
+                          <div className="flex items-center text-muted-foreground">
                             <MapPin className="h-4 w-4 mr-1" />
-                            <span className="text-sm">{option.location} ({option.distance} away)</span>
+                            <CardDescription className="text-sm">
+                              {option.location} ({option.distance} away)
+                            </CardDescription>
                           </div>
-                          
+                        </CardHeader>
+                        <CardContent className="pt-0">
                           <div className="grid grid-cols-2 gap-3 mb-4">
                             <div className="flex items-center">
                               <Thermometer className="h-4 w-4 text-primary mr-2" />
@@ -527,28 +548,32 @@ const Storage = () => {
                               <span className="text-sm text-indigo-700 dark:text-indigo-300">Sharing Available</span>
                             </div>
                           )}
-                          
-                          <div className="flex gap-2">
-                            <button 
-                              className="flex-1 py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors"
+                        </CardContent>
+                        <CardFooter className="pt-0">
+                          <div className="flex gap-2 w-full">
+                            <Button 
+                              variant="outline"
+                              className="flex-1 py-2 bg-primary/10 text-primary font-medium hover:bg-primary/20"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleFacilityClick(option);
                               }}
                             >
+                              <Info className="h-4 w-4 mr-2" />
                               View Details
-                            </button>
+                            </Button>
                             {option.sharingAvailable && (
-                              <button 
-                                className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                              <Button
+                                variant="outline" 
+                                className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <Share2 className="h-5 w-5" />
-                              </button>
+                              </Button>
                             )}
                           </div>
-                        </div>
-                      </div>
+                        </CardFooter>
+                      </Card>
                     ))}
                   </div>
                 )}
