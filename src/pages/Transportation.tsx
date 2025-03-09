@@ -1,10 +1,14 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TransportationForm from '@/components/TransportationForm';
 import TransportationProviderCard from '@/components/TransportationProviderCard';
 import BookTransportationModal from '@/components/BookTransportationModal';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const Transportation = () => {
+  const navigate = useNavigate();
   const [results, setResults] = useState<{
     formData: any;
     providers: any[];
@@ -37,13 +41,28 @@ const Transportation = () => {
     });
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Agricultural Transportation</h1>
-        <p className="text-muted-foreground">
-          Find reliable transportation services for your crops and agricultural products
-        </p>
+      <div className="flex items-center mb-8">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="mr-2" 
+          onClick={handleGoBack}
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Agricultural Transportation</h1>
+          <p className="text-muted-foreground">
+            Find reliable transportation services for your crops and agricultural products
+          </p>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 gap-8">
@@ -53,7 +72,7 @@ const Transportation = () => {
         </div>
         
         {results && results.providers.length > 0 && (
-          <div id="results">
+          <div id="results" className="animate-fade-in">
             <h2 className="text-xl font-semibold mb-4">Recommended Transportation Providers</h2>
             <p className="text-muted-foreground mb-6">
               Based on your requirements, here are the best transportation providers for your needs
