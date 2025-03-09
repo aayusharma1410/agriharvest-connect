@@ -48,7 +48,6 @@ const Navbar = () => {
       cropPrediction: "Crop Prediction",
       storage: "Storage",
       transportation: "Transportation",
-      cropProcessing: "Crop Processing",
       schemes: "Government Schemes",
       contact: "Contact Us",
       login: "Login",
@@ -60,7 +59,6 @@ const Navbar = () => {
       cropPrediction: "फसल भविष्यवाणी",
       storage: "भंडारण",
       transportation: "परिवहन",
-      cropProcessing: "फसल प्रसंस्करण",
       schemes: "सरकारी योजनाएँ",
       contact: "संपर्क करें",
       login: "लॉग इन",
@@ -76,7 +74,6 @@ const Navbar = () => {
     { title: t.cropPrediction, path: "/crop-prediction" },
     { title: t.storage, path: "/storage" },
     { title: t.transportation, path: "/transportation" },
-    { title: t.cropProcessing, path: "/crop-processing" },
     { title: t.schemes, path: "/government-schemes" },
     { title: t.contact, path: "/contact" },
   ];

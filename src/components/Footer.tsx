@@ -73,16 +73,16 @@ const Footer = () => {
               <div className="flex items-start">
                 <MapPin className="mr-2 h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-muted-foreground">
-                  AgriSarthi Tech Hub, Agri Innovation Park, Bangalore - 560100
+                  596, Barkat Nagar, Jaipur, Rajasthan, India 302015
                 </span>
               </div>
               <div className="flex items-center">
                 <Phone className="mr-2 h-5 w-5 text-primary shrink-0" />
-                <span className="text-muted-foreground">+91 1800-AGRI-HELP</span>
+                <span className="text-muted-foreground">+91 8955672580</span>
               </div>
               <div className="flex items-center">
                 <Mail className="mr-2 h-5 w-5 text-primary shrink-0" />
-                <span className="text-muted-foreground">support@agrisarthi.com</span>
+                <span className="text-muted-foreground">aayusharma1410a@gmail.com</span>
               </div>
             </div>
           </div>

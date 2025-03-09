@@ -81,7 +81,7 @@ const Contact = () => {
                       <Phone size={20} className="text-primary mr-3 mt-1" />
                       <div>
                         <p className="font-medium">Phone Support</p>
-                        <p className="text-muted-foreground">+91 1800 123 4567</p>
+                        <p className="text-muted-foreground">+91 8955672580</p>
                         <p className="text-sm text-muted-foreground">Mon-Sat: 9am - 6pm</p>
                       </div>
                     </div>
@@ -89,7 +89,7 @@ const Contact = () => {
                       <Mail size={20} className="text-primary mr-3 mt-1" />
                       <div>
                         <p className="font-medium">Email</p>
-                        <p className="text-muted-foreground">support@agrisarthi.com</p>
+                        <p className="text-muted-foreground">aayusharma1410a@gmail.com</p>
                         <p className="text-sm text-muted-foreground">We'll respond within 24 hours</p>
                       </div>
                     </div>
@@ -97,8 +97,8 @@ const Contact = () => {
                       <MapPin size={20} className="text-primary mr-3 mt-1" />
                       <div>
                         <p className="font-medium">Main Office</p>
-                        <p className="text-muted-foreground">123 AgriTech Park, Sector 45</p>
-                        <p className="text-muted-foreground">New Delhi, India 110001</p>
+                        <p className="text-muted-foreground">596, Barkat Nagar</p>
+                        <p className="text-muted-foreground">Jaipur, Rajasthan, India 302015</p>
                       </div>
                     </div>
                   </div>
