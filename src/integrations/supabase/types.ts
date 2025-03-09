@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      crop_predictions: {
+        Row: {
+          created_at: string
+          crop_type: string
+          farm_area: number
+          id: string
+          location: string
+          predicted_yield: number | null
+          recommendation: string | null
+          soil_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crop_type: string
+          farm_area: number
+          id?: string
+          location: string
+          predicted_yield?: number | null
+          recommendation?: string | null
+          soil_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crop_type?: string
+          farm_area?: number
+          id?: string
+          location?: string
+          predicted_yield?: number | null
+          recommendation?: string | null
+          soil_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -35,6 +74,89 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      scheme_applications: {
+        Row: {
+          application_date: string
+          created_at: string
+          farmer_details: Json | null
+          id: string
+          scheme_name: string
+          status: string
+          supporting_documents: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          application_date?: string
+          created_at?: string
+          farmer_details?: Json | null
+          id?: string
+          scheme_name: string
+          status?: string
+          supporting_documents?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          application_date?: string
+          created_at?: string
+          farmer_details?: Json | null
+          id?: string
+          scheme_name?: string
+          status?: string
+          supporting_documents?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      storage_bookings: {
+        Row: {
+          created_at: string
+          crop_type: string
+          end_date: string
+          id: string
+          quantity: number
+          start_date: string
+          status: string
+          storage_facility_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crop_type: string
+          end_date: string
+          id?: string
+          quantity: number
+          start_date: string
+          status?: string
+          storage_facility_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crop_type?: string
+          end_date?: string
+          id?: string
+          quantity?: number
+          start_date?: string
+          status?: string
+          storage_facility_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_bookings_storage_facility_id_fkey"
+            columns: ["storage_facility_id"]
+            isOneToOne: false
+            referencedRelation: "storage_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       storage_facilities: {
         Row: {
@@ -68,6 +190,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      transportation_bookings: {
+        Row: {
+          created_at: string
+          crop_type: string
+          delivery_location: string
+          id: string
+          pickup_date: string
+          pickup_location: string
+          quantity: number
+          status: string
+          transportation_provider_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crop_type: string
+          delivery_location: string
+          id?: string
+          pickup_date: string
+          pickup_location: string
+          quantity: number
+          status?: string
+          transportation_provider_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crop_type?: string
+          delivery_location?: string
+          id?: string
+          pickup_date?: string
+          pickup_location?: string
+          quantity?: number
+          status?: string
+          transportation_provider_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportation_bookings_transportation_provider_id_fkey"
+            columns: ["transportation_provider_id"]
+            isOneToOne: false
+            referencedRelation: "transportation_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transportation_providers: {
         Row: {
