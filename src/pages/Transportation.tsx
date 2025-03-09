@@ -2,13 +2,36 @@ import { useState, useEffect } from "react";
 import { Search, MapPin, Truck, Calendar, Clock, CreditCard, Filter, ArrowRight, User, Star } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+
+interface TransportProvider {
+  id: string;
+  name: string;
+  contact_info: string;
+  vehicle_type: string;
+  capacity: number;
+  rates: string;
+  service_area: string;
+}
 
 const Transportation = () => {
+  const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("vehicles");
   const [language, setLanguage] = useState<"english" | "hindi">("english");
   const [location, setLocation] = useState("");
   const [cropType, setCropType] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [dropLocation, setDropLocation] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [transportProviders, setTransportProviders] = useState<TransportProvider[]>([]);
+  const [suggestedProviders, setSuggestedProviders] = useState<TransportProvider[]>([]);
+  const [loading, setLoading] = useState(false);
   
   useEffect(() => {
     setIsLoaded(true);
@@ -27,10 +50,162 @@ const Transportation = () => {
     };
 
     window.addEventListener('languageChange', handleLanguageChange);
+    
+    // Fetch transportation providers
+    fetchTransportProviders();
+    
     return () => {
       window.removeEventListener('languageChange', handleLanguageChange);
     };
   }, []);
+
+  const fetchTransportProviders = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('transportation_providers')
+        .select('*');
+      
+      if (error) throw error;
+      
+      if (data) {
+        setTransportProviders(data);
+      }
+    } catch (error: any) {
+      console.error('Error fetching transportation providers:', error);
+      toast.error('Failed to load transportation providers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const suggestTransportProviders = () => {
+    if (!cropType || !quantity) {
+      toast.error(language === "english" ? "Please enter crop type and quantity" : "कृपया फसल प्रकार और मात्रा दर्ज करें");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Parse quantity to determine required capacity
+      const requiredCapacity = parseFloat(quantity) / 1000; // Convert kg to tons
+      
+      // Filter providers based on capacity needs
+      let filtered = [...transportProviders];
+      
+      // Filter by capacity (with some buffer)
+      filtered = filtered.filter(provider => 
+        provider.capacity >= requiredCapacity * 0.8 && 
+        provider.capacity <= requiredCapacity * 2
+      );
+      
+      // If crop type is fruits/vegetables and perishable, prioritize refrigerated vehicles
+      if (cropType === "fruits" || cropType === "vegetables") {
+        const refrigerated = filtered.filter(provider => 
+          provider.vehicle_type.toLowerCase().includes('refrigerated') || 
+          provider.vehicle_type.toLowerCase().includes('cold chain') ||
+          provider.vehicle_type.toLowerCase().includes('controlled')
+        );
+        
+        // If refrigerated options available, prioritize them
+        if (refrigerated.length > 0) {
+          filtered = [...refrigerated, ...filtered.filter(p => !refrigerated.includes(p))];
+        }
+      }
+      
+      // If pickup and dropoff location is provided, filter by service area
+      if (pickupLocation && dropLocation) {
+        const locationFiltered = filtered.filter(provider => {
+          if (!provider.service_area) return true;
+          
+          const serviceAreas = provider.service_area.split(',').map(area => area.trim().toLowerCase());
+          const pickup = pickupLocation.toLowerCase();
+          const dropoff = dropLocation.toLowerCase();
+          
+          return serviceAreas.some(area => 
+            pickup.includes(area) || dropoff.includes(area) || 
+            area.includes("india") || area.includes("all") || 
+            area.includes("pan")
+          );
+        });
+        
+        // Use location filtered if available, otherwise keep original filtered list
+        if (locationFiltered.length > 0) {
+          filtered = locationFiltered;
+        }
+      }
+      
+      // Sort by relevance (for this demo, we'll use a simple algorithm)
+      filtered.sort((a, b) => {
+        // Calculate a relevance score
+        const getScore = (provider: TransportProvider) => {
+          let score = 0;
+          
+          // Capacity match (perfect match gets higher score)
+          const capacityDiff = Math.abs(provider.capacity - requiredCapacity);
+          score += 10 - Math.min(capacityDiff * 2, 10);
+          
+          // Specialized vehicle for perishables
+          if ((cropType === "fruits" || cropType === "vegetables") && 
+              (provider.vehicle_type.toLowerCase().includes('refrigerated') || 
+               provider.vehicle_type.toLowerCase().includes('cold chain'))) {
+            score += 5;
+          }
+          
+          return score;
+        };
+        
+        return getScore(b) - getScore(a);
+      });
+      
+      // Get the top suggestions (limit to 6)
+      setSuggestedProviders(filtered.slice(0, 6));
+    } catch (error) {
+      console.error('Error suggesting transportation providers:', error);
+      toast.error('Failed to suggest transportation providers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBooking = async (providerId: string) => {
+    if (!user) {
+      toast.error(language === "english" ? "Please log in to book transportation" : "परिवहन बुक करने के लिए कृपया लॉग इन करें");
+      return;
+    }
+    
+    if (!cropType || !quantity || !pickupLocation || !dropLocation || !pickupDate) {
+      toast.error(language === "english" ? "Please fill in all required fields" : "कृपया सभी आवश्यक फ़ील्ड भरें");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('transportation_bookings')
+        .insert({
+          user_id: user.id,
+          transportation_provider_id: providerId,
+          pickup_location: pickupLocation,
+          delivery_location: dropLocation,
+          pickup_date: pickupDate,
+          crop_type: cropType,
+          quantity: parseFloat(quantity),
+          status: 'pending'
+        });
+      
+      if (error) throw error;
+      
+      toast.success(language === "english" ? "Transportation booking submitted successfully!" : "परिवहन बुकिंग सफलतापूर्वक जमा की गई!");
+    } catch (error: any) {
+      console.error('Error booking transportation:', error);
+      toast.error(error.message || (language === "english" ? "Failed to book transportation" : "परिवहन बुक करने में विफल"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Multilingual content
   const content = {
@@ -75,7 +250,15 @@ const Transportation = () => {
       availableVehicleNearby: "Available Vehicles Nearby",
       filtersShow: "Show Filters",
       filtersHide: "Hide Filters",
-      applyFilters: "Apply Filters"
+      applyFilters: "Apply Filters",
+      bookNow: "Book Now",
+      quantity: "Quantity (kg)",
+      quantityPlaceholder: "Enter quantity in kg",
+      findTransport: "Find Transport",
+      suggestedTransport: "Suggested Transport Services",
+      transportNotFound: "No transport services found matching your requirements",
+      loginToBook: "Please log in to book transportation",
+      fillAllFields: "Please fill in all required fields"
     },
     hindi: {
       pageTitle: "परिवहन",
@@ -118,55 +301,20 @@ const Transportation = () => {
       availableVehicleNearby: "आस-पास उपलब्ध वाहन",
       filtersShow: "फिल्टर दिखाएं",
       filtersHide: "फिल्टर छिपाएं",
-      applyFilters: "फिल्टर लागू करें"
+      applyFilters: "फिल्टर लागू करें",
+      bookNow: "अभी बुक करें",
+      quantity: "मात्रा (किग्रा)",
+      quantityPlaceholder: "किग्रा में मात्रा दर्ज करें",
+      findTransport: "परिवहन खोजें",
+      suggestedTransport: "सुझाई गई परिवहन सेवाएँ",
+      transportNotFound: "आपकी आवश्यकताओं के अनुर��प कोई परिवहन सेवा नहीं मिली",
+      loginToBook: "परिवहन बुक करने के लिए कृपया लॉग इन करें",
+      fillAllFields: "कृपया सभी आवश्यक फ़ील्ड भरें"
     }
   };
 
   // Set the current language content
   const t = language === "english" ? content.english : content.hindi;
-
-  // Vehicles data
-  const vehicles = [
-    {
-      id: 1,
-      name: language === "english" ? "Mini Truck" : "मिनी ट्रक",
-      driverName: language === "english" ? "Ramesh Singh" : "रमेश सिंह",
-      location: language === "english" ? "Indore, MP" : "इंदौर, एमपी",
-      distance: "3.2",
-      costPerKm: "₹12",
-      capacity: "1.5 ton",
-      vehicleType: language === "english" ? "Refrigerated" : "रेफ्रिजरेटेड",
-      available: true,
-      image: "/placeholder.svg",
-      rating: 4.7
-    },
-    {
-      id: 2,
-      name: language === "english" ? "Tata 407" : "टाटा 407",
-      driverName: language === "english" ? "Prakash Verma" : "प्रकाश वर्मा",
-      location: language === "english" ? "Bhopal, MP" : "भोपाल, एमपी",
-      distance: "5.5",
-      costPerKm: "₹14",
-      capacity: "2.5 ton",
-      vehicleType: language === "english" ? "General" : "सामान्य",
-      available: true,
-      image: "/placeholder.svg",
-      rating: 4.2
-    },
-    {
-      id: 3,
-      name: language === "english" ? "Mahindra Pickup" : "महिंद्रा पिकअप",
-      driverName: language === "english" ? "Suresh Kumar" : "सुरेश कुमार",
-      location: language === "english" ? "Ujjain, MP" : "उज्जैन, एमपी",
-      distance: "8.7",
-      costPerKm: "₹10",
-      capacity: "1 ton",
-      vehicleType: language === "english" ? "General" : "सामान्य",
-      available: false,
-      image: "/placeholder.svg",
-      rating: 4.5
-    }
-  ];
 
   // Shared transportation requests
   const sharedRequests = [
@@ -317,10 +465,12 @@ const Transportation = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">{t.cropQuantity}</label>
+                      <label className="block text-sm font-medium mb-2">{t.quantity}</label>
                       <input
                         type="number"
-                        placeholder="0"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        placeholder={t.quantityPlaceholder}
                         className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       />
                     </div>
@@ -353,6 +503,8 @@ const Transportation = () => {
                         <label className="block text-sm font-medium mb-2">{t.pickupDate}</label>
                         <input
                           type="date"
+                          value={pickupDate}
+                          onChange={(e) => setPickupDate(e.target.value)}
                           className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
                       </div>
@@ -367,6 +519,8 @@ const Transportation = () => {
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <input
                           type="text"
+                          value={pickupLocation}
+                          onChange={(e) => setPickupLocation(e.target.value)}
                           placeholder={language === "english" ? "Enter pickup location" : "पिकअप स्थान दर्ज करें"}
                           className="w-full py-2 pl-10 pr-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
@@ -378,6 +532,8 @@ const Transportation = () => {
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <input
                           type="text"
+                          value={dropLocation}
+                          onChange={(e) => setDropLocation(e.target.value)}
                           placeholder={language === "english" ? "Enter drop location" : "डिलीवरी स्थान दर्ज करें"}
                           className="w-full py-2 pl-10 pr-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
@@ -386,73 +542,99 @@ const Transportation = () => {
                   </div>
 
                   <div className="flex justify-center">
-                    <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
-                      {t.findVehicles}
-                    </button>
+                    <Button 
+                      onClick={suggestTransportProviders}
+                      className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {language === "english" ? "Searching..." : "खोज रहा है..."}
+                        </>
+                      ) : (
+                        t.findTransport
+                      )}
+                    </Button>
                   </div>
                 </div>
 
                 {/* Transport Recommendations */}
-                <div className="mb-10">
-                  <h3 className="text-xl font-medium mb-4">{t.suggestedVehicles}</h3>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {vehicles.map((vehicle) => (
-                      <div key={vehicle.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all card-hover-effect">
-                        <div className="h-48 overflow-hidden">
-                          <img 
-                            src={vehicle.image} 
-                            alt={vehicle.name} 
-                            className="w-full h-full object-cover transition-transform hover:scale-105"
-                          />
+                {suggestedProviders.length > 0 && (
+                  <div className="mb-10">
+                    <h3 className="text-xl font-medium mb-4">{t.suggestedTransport}</h3>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {suggestedProviders.map((provider) => (
+                        <div key={provider.id} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all card-hover-effect">
+                          <div className="h-48 overflow-hidden bg-muted flex items-center justify-center">
+                            <Truck size={64} className="text-muted-foreground" />
+                          </div>
+                          <div className="p-5">
+                            <div className="flex justify-between items-start mb-3">
+                              <h4 className="text-lg font-medium">{provider.name}</h4>
+                              <div className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-md text-sm font-medium">
+                                {(Math.random() * 1 + 4).toFixed(1)} ★
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center text-muted-foreground mb-2">
+                              <User className="h-4 w-4 mr-1" />
+                              <span className="text-sm">{provider.contact_info}</span>
+                            </div>
+                            
+                            <div className="flex items-center text-muted-foreground mb-3">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              <span className="text-sm">{provider.service_area || "Service Area Not Specified"}</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                              <div className="flex items-center">
+                                <Truck className="h-4 w-4 text-primary mr-2" />
+                                <span className="text-sm">{provider.vehicle_type}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 text-primary mr-2" />
+                                <span className="text-sm">{provider.capacity} ton</span>
+                              </div>
+                              <div className="flex items-center col-span-2">
+                                <CreditCard className="h-4 w-4 text-primary mr-2" />
+                                <span className="text-sm">{provider.rates} {language === "english" ? "per km" : "प्रति किमी"}</span>
+                              </div>
+                            </div>
+                            
+                            <Button 
+                              onClick={() => handleBooking(provider.id)}
+                              className="w-full py-2 rounded-lg font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+                              disabled={loading || !user}
+                            >
+                              {loading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  {language === "english" ? "Processing..." : "प्रोसेसिंग..."}
+                                </>
+                              ) : (
+                                user ? t.bookNow : t.loginToBook
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="p-5">
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="text-lg font-medium">{vehicle.name}</h4>
-                            <div className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-md text-sm font-medium">
-                              {vehicle.rating} ★
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center text-muted-foreground mb-2">
-                            <User className="h-4 w-4 mr-1" />
-                            <span className="text-sm">{vehicle.driverName}</span>
-                          </div>
-                          
-                          <div className="flex items-center text-muted-foreground mb-3">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            <span className="text-sm">{vehicle.location} • {vehicle.distance} {t.kmAway}</span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="flex items-center">
-                              <Truck className="h-4 w-4 text-primary mr-2" />
-                              <span className="text-sm">{vehicle.vehicleType}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 text-primary mr-2" />
-                              <span className="text-sm">{vehicle.capacity}</span>
-                            </div>
-                            <div className="flex items-center col-span-2">
-                              <CreditCard className="h-4 w-4 text-primary mr-2" />
-                              <span className="text-sm">{vehicle.costPerKm} {language === "english" ? "per km" : "प्रति किमी"}</span>
-                            </div>
-                          </div>
-                          
-                          <button 
-                            className={`w-full py-2 rounded-lg font-medium transition-colors ${
-                              vehicle.available
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-muted text-muted-foreground cursor-not-allowed"
-                            }`}
-                            disabled={!vehicle.available}
-                          >
-                            {t.contactNow}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* No Results Message */}
+                {suggestedProviders.length === 0 && transportProviders.length > 0 && cropType && quantity && (
+                  <div className="text-center p-10 bg-muted rounded-lg">
+                    <Truck size={48} className="mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-medium mb-2">{t.transportNotFound}</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {language === "english" ? 
+                        "Try adjusting your search criteria or contact support for assistance." : 
+                        "अपने खोज मानदंड को समायोजित करने का प्रयास करें या सहायता ���े लिए समर्थन से संपर्क करें।"}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
