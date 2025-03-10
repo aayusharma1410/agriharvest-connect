@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -11,7 +11,8 @@ import {
   DialogTitle 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, User } from 'lucide-react';
 
 interface BookTransportationModalProps {
   isOpen: boolean;
@@ -37,6 +38,39 @@ const BookTransportationModal = ({
 }: BookTransportationModalProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [schemes, setSchemes] = useState<any[]>([]);
+  const [selectedScheme, setSelectedScheme] = useState<string>('');
+  
+  // Fetch relevant government schemes
+  useEffect(() => {
+    if (isOpen && formData) {
+      const fetchSchemes = async () => {
+        try {
+          // Fetch relevant government schemes based on locations and crop type
+          const { data, error } = await supabase
+            .from('government_schemes')
+            .select('id, name, category')
+            .or(`state.eq.All India,state.ilike.%${formData.pickupLocation}%,state.ilike.%${formData.deliveryLocation}%`)
+            .order('category');
+            
+          if (error) throw error;
+          
+          // Filter for transportation-related schemes
+          const transportSchemes = data.filter(scheme => 
+            scheme.category.toLowerCase().includes('transport') || 
+            scheme.name.toLowerCase().includes('transport') ||
+            scheme.category.toLowerCase().includes('logistics')
+          );
+          
+          setSchemes(transportSchemes.slice(0, 5)); // Limit to top 5
+        } catch (error) {
+          console.error('Error fetching government schemes:', error);
+        }
+      };
+      
+      fetchSchemes();
+    }
+  }, [isOpen, formData]);
   
   const handleBooking = async () => {
     if (!provider || !formData) return;
@@ -60,7 +94,8 @@ const BookTransportationModal = ({
           pickup_date: formData.pickupDate,
           crop_type: formData.cropType,
           quantity: parseFloat(formData.quantity),
-          status: 'pending'
+          status: 'pending',
+          government_scheme_id: selectedScheme || null
         });
         
       if (error) throw error;
@@ -114,6 +149,31 @@ const BookTransportationModal = ({
               <div className="font-semibold">Pickup Date:</div>
               <div>{formData.pickupDate}</div>
             </div>
+            
+            {schemes.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <label className="font-medium text-sm flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  Apply with Government Scheme (Optional)
+                </label>
+                <Select value={selectedScheme} onValueChange={setSelectedScheme}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a government scheme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No scheme</SelectItem>
+                    {schemes.map(scheme => (
+                      <SelectItem key={scheme.id} value={scheme.id}>
+                        {scheme.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Applying with a government scheme may provide subsidies or benefits.
+                </p>
+              </div>
+            )}
             
             <p className="text-sm text-muted-foreground">
               By confirming, you'll receive a booking confirmation and the provider will contact you with further details.

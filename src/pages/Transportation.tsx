@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import TransportationForm from '@/components/TransportationForm';
 import TransportationProviderCard from '@/components/TransportationProviderCard';
 import BookTransportationModal from '@/components/BookTransportationModal';
+import GovernmentSchemeRecommendations from '@/components/GovernmentSchemeRecommendations';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -23,6 +24,7 @@ const Transportation = () => {
   });
   
   const [loading, setLoading] = useState(false);
+  const [schemes, setSchemes] = useState<any[]>([]);
   
   const handleFormSuccess = async (formData: any) => {
     // Show loading state
@@ -86,6 +88,34 @@ const Transportation = () => {
       
       // Sort by score (highest first)
       const sortedProviders = scoredProviders.sort((a, b) => b.score - a.score);
+      
+      // Fetch relevant government schemes for transportation
+      const { data: schemesData, error: schemesError } = await supabase
+        .from('government_schemes')
+        .select('*')
+        .or(`state.eq.All India,state.ilike.%${pickupLocation}%,state.ilike.%${deliveryLocation}%`)
+        .order('category');
+        
+      if (schemesError) {
+        console.error("Error fetching schemes:", schemesError);
+      } else {
+        // Filter schemes by relevance to transportation and crop type
+        const relevantSchemes = schemesData.filter(scheme => {
+          const isTransportScheme = 
+            scheme.category.toLowerCase().includes('transport') || 
+            scheme.description.toLowerCase().includes('transport') ||
+            scheme.description.toLowerCase().includes('logistics') ||
+            scheme.description.toLowerCase().includes('supply chain');
+            
+          const matchesCropType = 
+            scheme.description.toLowerCase().includes(cropType) ||
+            scheme.category.toLowerCase().includes(cropType);
+            
+          return isTransportScheme || matchesCropType;
+        });
+        
+        setSchemes(relevantSchemes.slice(0, 6)); // Limit to top 6 most relevant schemes
+      }
       
       // Set the results
       setResults({
@@ -217,6 +247,10 @@ const Transportation = () => {
           
           {results && results.providers && results.providers.length > 0 && !loading && (
             <div id="results" className="animate-fade-in">
+              {schemes.length > 0 && (
+                <GovernmentSchemeRecommendations schemes={schemes} />
+              )}
+            
               <h2 className="text-xl font-semibold mb-4">Recommended Transportation Providers</h2>
               <p className="text-muted-foreground mb-6">
                 Based on your requirements, here are the best transportation providers for your needs

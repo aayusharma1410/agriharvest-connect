@@ -48,6 +48,45 @@ export type Database = {
         }
         Relationships: []
       }
+      government_schemes: {
+        Row: {
+          application_process: string
+          benefits: string
+          category: string
+          created_at: string
+          description: string
+          eligibility: string
+          id: string
+          name: string
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_process: string
+          benefits: string
+          category: string
+          created_at?: string
+          description: string
+          eligibility: string
+          id?: string
+          name: string
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_process?: string
+          benefits?: string
+          category?: string
+          created_at?: string
+          description?: string
+          eligibility?: string
+          id?: string
+          name?: string
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -116,6 +155,7 @@ export type Database = {
           created_at: string
           crop_type: string
           end_date: string
+          government_scheme_id: string | null
           id: string
           quantity: number
           start_date: string
@@ -128,6 +168,7 @@ export type Database = {
           created_at?: string
           crop_type: string
           end_date: string
+          government_scheme_id?: string | null
           id?: string
           quantity: number
           start_date: string
@@ -140,6 +181,7 @@ export type Database = {
           created_at?: string
           crop_type?: string
           end_date?: string
+          government_scheme_id?: string | null
           id?: string
           quantity?: number
           start_date?: string
@@ -149,6 +191,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_bookings_government_scheme_id_fkey"
+            columns: ["government_scheme_id"]
+            isOneToOne: false
+            referencedRelation: "government_schemes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_bookings_storage_facility_id_fkey"
             columns: ["storage_facility_id"]
