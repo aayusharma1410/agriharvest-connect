@@ -66,6 +66,55 @@ const Storage = () => {
     fetchFacilities();
   }, []);
   
+  const mapFacilityForDisplay = (facility) => {
+    let priceRange = "Contact for details";
+    if (facility.capacity) {
+      if (facility.capacity < 10) {
+        priceRange = "₹1,000 - ₹3,000 per ton/month";
+      } else if (facility.capacity < 50) {
+        priceRange = "₹800 - ₹2,500 per ton/month";
+      } else {
+        priceRange = "₹600 - ₹2,000 per ton/month";
+      }
+    }
+
+    return {
+      ...facility,
+      priceRange,
+      temperature: facility.description?.includes('cold') ? "2°C - 8°C" : "Ambient",
+      humidity: facility.description?.includes('humidity') ? "Controlled" : "Standard",
+      contactInfo: facility.contact_info,
+      cropTypes: determineSuitableCrops(facility),
+    };
+  };
+
+  const determineSuitableCrops = (facility) => {
+    const name = (facility.name || "").toLowerCase();
+    const description = (facility.description || "").toLowerCase();
+    
+    const crops = [];
+    
+    if (name.includes('cold') || description.includes('cold') || 
+        name.includes('refrigerated') || description.includes('refrigerated')) {
+      crops.push('Fruits', 'Vegetables', 'Dairy');
+    }
+    
+    if (name.includes('grain') || description.includes('grain') || 
+        name.includes('cereal') || description.includes('cereal')) {
+      crops.push('Wheat', 'Rice', 'Maize');
+    }
+    
+    if (name.includes('spice') || description.includes('spice')) {
+      crops.push('Spices');
+    }
+    
+    if (crops.length === 0) {
+      crops.push('Grains', 'Pulses', 'Oilseeds');
+    }
+    
+    return crops;
+  };
+
   const handleSearch = async () => {
     if (!cropType || !quantity || !location || !startDate || !endDate) {
       toast.error('Please fill in all required fields');
@@ -85,7 +134,6 @@ const Storage = () => {
     setLoading(true);
     
     try {
-      // Fetch storage facilities matching criteria
       const { data: facilitiesData, error: facilitiesError } = await supabase
         .from('storage_facilities')
         .select('*');
@@ -96,21 +144,18 @@ const Storage = () => {
         throw new Error('No storage facilities found');
       }
       
-      // Filter facilities based on location and capacity
+      const mappedFacilities = facilitiesData.map(mapFacilityForDisplay);
+      
       const quantityValue = parseFloat(quantity);
-      const matchingFacilities = facilitiesData.filter(facility => {
-        // Check if location matches
+      const matchingFacilities = mappedFacilities.filter(facility => {
         const locationMatch = facility.location.toLowerCase().includes(location.toLowerCase());
         
-        // Check if capacity is sufficient (if specified)
         const capacityMatch = !facility.capacity || facility.capacity >= quantityValue;
         
         return locationMatch && capacityMatch;
       });
       
-      // Sort facilities by best match
       const sortedFacilities = matchingFacilities.sort((a, b) => {
-        // Prioritize exact location matches
         const aLocationScore = a.location.toLowerCase() === location.toLowerCase() ? 2 : 
                               a.location.toLowerCase().includes(location.toLowerCase()) ? 1 : 0;
         const bLocationScore = b.location.toLowerCase() === location.toLowerCase() ? 2 : 
@@ -120,16 +165,14 @@ const Storage = () => {
           return bLocationScore - aLocationScore;
         }
         
-        // Then prioritize capacity closest to required quantity
         const aCapacityDiff = a.capacity ? Math.abs(a.capacity - quantityValue) : Number.MAX_VALUE;
         const bCapacityDiff = b.capacity ? Math.abs(b.capacity - quantityValue) : Number.MAX_VALUE;
         
         return aCapacityDiff - bCapacityDiff;
       });
       
-      setFilteredFacilities(sortedFacilities);
+      setFilteredFacilities(sortedFacilities.map(mapFacilityForDisplay));
       
-      // Fetch relevant government schemes based on crop type and location
       const { data: schemesData, error: schemesError } = await supabase
         .from('government_schemes')
         .select('*')
@@ -138,7 +181,6 @@ const Storage = () => {
         
       if (schemesError) throw schemesError;
       
-      // Filter schemes by relevance to crop type and storage
       const relevantSchemes = schemesData.filter(scheme => {
         const isStorageScheme = 
           scheme.category.toLowerCase().includes('storage') || 
@@ -156,7 +198,6 @@ const Storage = () => {
       setSchemes(relevantSchemes);
       setSearchPerformed(true);
       
-      // Scroll to results
       setTimeout(() => {
         window.scrollTo({ top: document.getElementById('results')?.offsetTop || 0, behavior: 'smooth' });
       }, 100);
@@ -165,8 +206,7 @@ const Storage = () => {
       console.error('Error searching storage facilities:', error);
       toast.error(`Error searching storage facilities: ${error.message}`);
       
-      // Set default data if search fails
-      setFilteredFacilities(facilities);
+      setFilteredFacilities(facilities.map(mapFacilityForDisplay));
       setSearchPerformed(true);
     } finally {
       setLoading(false);
@@ -176,7 +216,8 @@ const Storage = () => {
   const handleViewDetails = (facilityId: string) => {
     const facility = facilities.find(f => f.id === facilityId);
     if (facility) {
-      setSelectedFacility(facility);
+      const mappedFacility = mapFacilityForDisplay(facility);
+      setSelectedFacility(mappedFacility);
       setDetailsModalOpen(true);
     }
   };
@@ -194,7 +235,6 @@ const Storage = () => {
     
     let results = [...facilities];
     
-    // Filter by location/name search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(
@@ -205,7 +245,6 @@ const Storage = () => {
       );
     }
     
-    // Filter by capacity
     if (filterCapacity) {
       const capacityValue = parseFloat(filterCapacity);
       results = results.filter(
@@ -213,7 +252,6 @@ const Storage = () => {
       );
     }
     
-    // Apply the main search filter parameters if search was performed
     if (location) {
       results = results.filter(
         facility => facility.location.toLowerCase().includes(location.toLowerCase())
@@ -230,7 +268,6 @@ const Storage = () => {
     setFilteredFacilities(results);
   };
   
-  // Apply filters when search query or filter capacity changes
   useEffect(() => {
     applyFilters();
   }, [searchQuery, filterCapacity]);

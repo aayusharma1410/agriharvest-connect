@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, User, Warehouse, Leaf, Scale } from 'lucide-react';
+import { Loader2, Calendar, User, Store, Leaf, Scale } from 'lucide-react';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -61,7 +61,8 @@ const BookStorageModal = ({
           end_date: storageDetails.endDate,
           crop_type: storageDetails.cropType,
           quantity: parseFloat(storageDetails.quantity),
-          government_scheme_id: selectedScheme || null
+          government_scheme_id: selectedScheme || null,
+          status: 'pending'
         });
         
       if (error) throw error;
@@ -98,7 +99,7 @@ const BookStorageModal = ({
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="font-semibold flex items-center gap-2">
-                <Warehouse className="h-4 w-4 text-muted-foreground" />
+                <Store className="h-4 w-4 text-muted-foreground" />
                 Facility:
               </div>
               <div>{facility.name}</div>

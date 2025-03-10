@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { MapPin, Thermometer, Droplets, Clock, Phone, Info, Share2, Users } from "lucide-react";
+import { MapPin, Thermometer, Droplets, Clock, Phone, Info, Share2, Users, Store, Tag, Calendar } from "lucide-react";
 
 interface StorageFacilityDetailsProps {
   facility: {
@@ -75,7 +75,7 @@ const StorageFacilityDetails: React.FC<StorageFacilityDetailsProps> = ({
             )}
             {facility.capacity && (
               <div className="flex items-center">
-                <Clock className="h-5 w-5 text-primary mr-2" />
+                <Store className="h-5 w-5 text-primary mr-2" />
                 <div>
                   <p className="text-sm font-medium">Capacity</p>
                   <p className="text-sm text-muted-foreground">{facility.capacity}</p>
@@ -84,7 +84,7 @@ const StorageFacilityDetails: React.FC<StorageFacilityDetailsProps> = ({
             )}
             {facility.priceRange && (
               <div className="flex items-center">
-                <Info className="h-5 w-5 text-primary mr-2" />
+                <Tag className="h-5 w-5 text-primary mr-2" />
                 <div>
                   <p className="text-sm font-medium">Price Range</p>
                   <p className="text-sm text-muted-foreground">{facility.priceRange}</p>
@@ -138,6 +138,7 @@ const StorageFacilityDetails: React.FC<StorageFacilityDetailsProps> = ({
               className="flex-1"
               onClick={() => onBook(facility.id)}
             >
+              <Calendar className="h-4 w-4 mr-2" />
               Book Now
             </Button>
           )}

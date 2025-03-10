@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Warehouse, Phone, Thermometer, Info } from 'lucide-react';
+import { MapPin, Store, Phone, Thermometer, Tag, Calendar, Info } from 'lucide-react';
 
 interface StorageFacilityCardProps {
   facility: {
@@ -13,6 +13,7 @@ interface StorageFacilityCardProps {
     description: string | null;
     contact_info: string | null;
     capacity: number | null;
+    price_range?: string;
   };
   onViewDetails: (facilityId: string) => void;
   onBook: (facilityId: string) => void;
@@ -36,6 +37,11 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
     return 'General Storage';
   };
 
+  // Format price range or provide default
+  const getPriceRange = () => {
+    return facility.price_range || "₹1,000 - ₹5,000 per ton/month";
+  };
+
   return (
     <Card className="w-full h-full shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -57,14 +63,19 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
           </p>
           
           <div className="flex items-center gap-2">
-            <Warehouse className="h-4 w-4 text-muted-foreground" />
-            <span>Capacity: {facility.capacity ? `${facility.capacity} tons` : "Contact for details"}</span>
+            <Store className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Capacity: {facility.capacity ? `${facility.capacity} tons` : "Contact for details"}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Price: {getPriceRange()}</span>
           </div>
           
           {facility.contact_info && (
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{facility.contact_info}</span>
+              <span className="text-sm">{facility.contact_info}</span>
             </div>
           )}
         </div>
@@ -82,7 +93,8 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
           className="flex-1 bg-primary hover:bg-primary/90" 
           onClick={() => onBook(facility.id)}
         >
-          Book Storage
+          <Calendar className="h-4 w-4 mr-2" />
+          Book
         </Button>
       </CardFooter>
     </Card>
