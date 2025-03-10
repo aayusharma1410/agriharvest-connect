@@ -78,7 +78,7 @@ const TransportationProviderCard = ({ provider, formData, onBook }: Transportati
   };
 
   return (
-    <Card className="w-full h-full">
+    <Card className="w-full h-full shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -118,7 +118,10 @@ const TransportationProviderCard = ({ provider, formData, onBook }: Transportati
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={() => onBook(provider.id)}>
+        <Button 
+          className="w-full bg-primary hover:bg-primary/90" 
+          onClick={() => onBook(provider.id)}
+        >
           Book Transport
         </Button>
       </CardFooter>
