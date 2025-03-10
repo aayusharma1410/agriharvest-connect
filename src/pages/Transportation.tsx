@@ -45,33 +45,52 @@ const Transportation = () => {
       
       console.log("Fetched providers:", providers);
       
-      // Filter and sort providers based on form data
-      // This is a simple example - you can make this more sophisticated
-      const filteredProviders = providers
-        .filter(provider => {
-          // If provider has a service area, check if it includes pickup or delivery location
-          if (provider.service_area) {
-            // Simple string match - could be improved with more sophisticated matching
-            return provider.service_area.toLowerCase().includes(formData.pickupLocation.toLowerCase()) || 
-                  provider.service_area.toLowerCase().includes(formData.deliveryLocation.toLowerCase());
-          }
-          return true; // If no service area specified, include in results
-        })
-        .sort((a, b) => {
-          // Sort by capacity if we have quantity data
-          const quantityValue = parseFloat(formData.quantity);
-          const aCapDiff = a.capacity ? Math.abs(a.capacity - quantityValue) : 1000;
-          const bCapDiff = b.capacity ? Math.abs(b.capacity - quantityValue) : 1000;
-          return aCapDiff - bCapDiff;
-        });
+      // Extract relevant locations for filtering
+      const pickupLocation = formData.pickupLocation.toLowerCase();
+      const deliveryLocation = formData.deliveryLocation.toLowerCase();
+      const cropType = formData.cropType.toLowerCase();
+      const quantityValue = parseFloat(formData.quantity) || 0;
       
-      // If we don't have any matches after filtering, show all providers
-      const finalProviders = filteredProviders.length > 0 ? filteredProviders : providers;
+      // Filter and score providers based on multiple criteria
+      const scoredProviders = providers.map(provider => {
+        let score = 0;
+        const serviceArea = (provider.service_area || "").toLowerCase();
+        
+        // Location match scoring
+        if (serviceArea.includes(pickupLocation)) score += 10;
+        if (serviceArea.includes(deliveryLocation)) score += 10;
+        
+        // Capacity match scoring
+        const capacityDiff = provider.capacity ? Math.abs(provider.capacity - quantityValue) : 1000;
+        score += (1000 - capacityDiff) / 100; // Higher score for closer capacity match
+        
+        // Vehicle type scoring for crop type
+        const vehicleType = (provider.vehicle_type || "").toLowerCase();
+        if ((cropType === "fruits" || cropType === "vegetables") && 
+            (vehicleType.includes("refrigerated") || vehicleType.includes("cold"))) {
+          score += 15; // Refrigerated vehicles are better for perishables
+        }
+        
+        if ((cropType === "grains" || cropType === "cereals" || cropType === "pulses") && 
+            (vehicleType.includes("heavy") || vehicleType.includes("large"))) {
+          score += 10; // Heavy duty vehicles are better for grains
+        }
+        
+        return {
+          ...provider,
+          score,
+          // Add fields for UI display
+          isSuitable: score > 10,
+        };
+      });
+      
+      // Sort by score (highest first)
+      const sortedProviders = scoredProviders.sort((a, b) => b.score - a.score);
       
       // Set the results
       setResults({
         formData,
-        providers: finalProviders,
+        providers: sortedProviders,
       });
       
       // Add a small delay before scrolling to ensure the results are rendered
@@ -92,7 +111,9 @@ const Transportation = () => {
           vehicle_type: "Refrigerated Truck",
           capacity: 10,
           rates: "₹20 per km",
-          service_area: "Delhi, Punjab, Haryana"
+          service_area: "Delhi, Punjab, Haryana",
+          score: 25,
+          isSuitable: true
         },
         {
           id: "2",
@@ -101,7 +122,9 @@ const Transportation = () => {
           vehicle_type: "Heavy Duty Truck",
           capacity: 20,
           rates: "₹18 per km",
-          service_area: "Maharashtra, Gujarat, Karnataka"
+          service_area: "Maharashtra, Gujarat, Karnataka",
+          score: 20,
+          isSuitable: true
         },
         {
           id: "3",
@@ -110,7 +133,9 @@ const Transportation = () => {
           vehicle_type: "Medium Truck",
           capacity: 8,
           rates: "₹15 per km",
-          service_area: "Uttar Pradesh, Bihar, Madhya Pradesh"
+          service_area: "Uttar Pradesh, Bihar, Madhya Pradesh",
+          score: 15,
+          isSuitable: true
         }
       ];
       

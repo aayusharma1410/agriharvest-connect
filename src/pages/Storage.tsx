@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, MapPin, Thermometer, Droplets, Clock, ArrowRight, Leaf, Zap, AlertCircle, Share2, Users, Box, Archive, Info } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -15,6 +15,7 @@ import StorageFacilityDetails from "../components/StorageFacilityDetails";
 
 type StorageFacility = Database['public']['Tables']['storage_facilities']['Row'];
 
+// Sample data as fallback
 const sampleStorageFacilities = [
   {
     id: "1",
@@ -84,42 +85,14 @@ const Storage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [filteredFacilities, setFilteredFacilities] = useState<StorageFacility[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [storageType, setStorageType] = useState("");
   
   const { user } = useAuth();
 
   useEffect(() => {
     setIsLoaded(true);
-    
-    // Try to fetch storage facilities from the database first
-    const fetchStorageFacilities = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('storage_facilities')
-          .select('*');
-        
-        if (error) {
-          console.error('Error fetching from database:', error);
-          // If fetching fails, use sample data instead
-          setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
-        } else if (data && data.length > 0) {
-          // Use database data if available
-          setStorageFacilities(data);
-        } else {
-          // Use sample data if no database data
-          setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
-          console.log("Using sample storage facilities as no database entries were found");
-        }
-      } catch (error: any) {
-        console.error('Error fetching storage facilities:', error);
-        toast.error(`Error fetching storage facilities: ${error.message}`);
-        // Fall back to sample data on any error
-        setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchStorageFacilities();
   }, []);
 
@@ -130,14 +103,25 @@ const Storage = () => {
         .from('storage_facilities')
         .select('*');
       
-      if (error) throw error;
-      
-      if (data) {
+      if (error) {
+        console.error('Error fetching from database:', error);
+        // If fetching fails, use sample data instead
+        setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
+        toast.error(`Error fetching storage facilities: ${error.message}`);
+      } else if (data && data.length > 0) {
+        // Use database data if available
+        console.log("Fetched storage facilities:", data.length);
         setStorageFacilities(data);
+      } else {
+        // Use sample data if no database data
+        setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
+        console.log("Using sample storage facilities as no database entries were found");
       }
     } catch (error: any) {
+      console.error('Error fetching storage facilities:', error);
       toast.error(`Error fetching storage facilities: ${error.message}`);
-      console.error('Error:', error);
+      // Fall back to sample data on any error
+      setStorageFacilities(sampleStorageFacilities as StorageFacility[]);
     } finally {
       setLoading(false);
     }
@@ -156,8 +140,13 @@ const Storage = () => {
   };
 
   const analyzeCrop = () => {
+    if (!cropType) {
+      toast.error("Please select a crop type");
+      return;
+    }
+
     // Simulating AI analysis based on inputs
-    const parsedQuantity = parseInt(quantity);
+    const parsedQuantity = parseInt(quantity) || 0;
     const result = {
       recommendedStorageType: cropType === "fruits" || cropType === "vegetables" ? "Cold Storage" : "Dry Warehouse",
       temperatureRange: cropType === "fruits" ? "2-4°C" : cropType === "vegetables" ? "5-10°C" : "15-25°C",
@@ -169,49 +158,188 @@ const Storage = () => {
     
     setAnalysisResult(result);
     setShowAnalysis(true);
+    
+    // Filter storage facilities based on crop type and location
+    filterStorageFacilities(cropType, location);
   };
 
-  // Map storage facilities to UI display format
-  const storageOptionsFromDB = storageFacilities.map((facility, index) => {
-    // Generate synthetic data for each facility
-    const randomDistance = (Math.random() * 10).toFixed(1);
-    const randomTemperature = facility.name.includes('Cold') ? "2-4°C" : "15-25°C";
-    const randomHumidity = facility.name.includes('Cold') ? "85-90%" : "50-60%";
-    const randomCapacity = Math.floor(Math.random() * 100) + "%";
-    const randomPrice = `₹${Math.floor(Math.random() * 5) + 3}-${Math.floor(Math.random() * 5) + 5} per kg/month`;
-    const randomRating = (Math.random() * 1 + 4).toFixed(1);
-    const cropTypes = facility.name.includes('Cold') 
-      ? ["fruits", "vegetables"] 
-      : ["grains", "cereals", "pulses"];
+  const filterStorageFacilities = (cropType: string, location: string) => {
+    if (!cropType && !location) {
+      setFilteredFacilities(storageFacilities);
+      return;
+    }
+
+    let filtered = [...storageFacilities];
     
-    // Select an appropriate icon based on facility type
-    let FacilityIcon = Box;
-    if (facility.name.includes('Cold')) {
-      FacilityIcon = Thermometer;
-    } else if (facility.name.includes('Warehouse')) {
-      FacilityIcon = Archive;
-    } else if (facility.name.includes('Silo')) {
-      FacilityIcon = Box;
+    // Filter by location if provided
+    if (location) {
+      const locationLower = location.toLowerCase();
+      filtered = filtered.filter(facility => 
+        facility.location.toLowerCase().includes(locationLower)
+      );
     }
     
-    return {
-      id: facility.id,
-      name: facility.name,
-      distance: `${randomDistance} km`,
-      temperature: randomTemperature,
-      humidity: randomHumidity,
-      capacity: `${randomCapacity} available`,
-      priceRange: randomPrice,
-      image: "/placeholder.svg",
-      rating: parseFloat(randomRating),
-      cropTypes: cropTypes,
-      sharingAvailable: index % 2 === 0, // Alternate facilities have sharing
-      location: facility.location,
-      contactInfo: facility.contact_info || 'Contact information not available',
-      description: facility.description || 'No description available',
-      icon: FacilityIcon
-    };
-  });
+    // Filter by crop type based on name or description
+    if (cropType) {
+      filtered = filtered.filter(facility => {
+        const facilityName = facility.name.toLowerCase();
+        const facilityDesc = facility.description?.toLowerCase() || "";
+        
+        // If crop type is fruits or vegetables, prioritize cold storage
+        if (cropType === "fruits" || cropType === "vegetables") {
+          return facilityName.includes("cold") || 
+                 facilityDesc.includes("cold") || 
+                 facilityName.includes("fresh") || 
+                 facilityDesc.includes("temperature") ||
+                 facilityDesc.includes("refrigerat");
+        }
+        
+        // For grains, cereals, pulses
+        if (cropType === "grains" || cropType === "cereals" || cropType === "pulses") {
+          return facilityName.includes("grain") || 
+                 facilityName.includes("warehouse") || 
+                 facilityDesc.includes("grain") || 
+                 facilityDesc.includes("dry") ||
+                 facilityDesc.includes("warehouse");
+        }
+        
+        // For spices
+        if (cropType === "spices") {
+          return facilityName.includes("spice") || 
+                 facilityDesc.includes("spice") || 
+                 facilityDesc.includes("aroma") ||
+                 facilityDesc.includes("ventilation");
+        }
+        
+        return true;
+      });
+    }
+    
+    // Prioritize matching facilities by relevance
+    filtered.sort((a, b) => {
+      const aNameMatch = a.name.toLowerCase().includes(cropType.toLowerCase()) ? 2 : 0;
+      const bNameMatch = b.name.toLowerCase().includes(cropType.toLowerCase()) ? 2 : 0;
+      
+      const aDescMatch = a.description?.toLowerCase().includes(cropType.toLowerCase()) ? 1 : 0;
+      const bDescMatch = b.description?.toLowerCase().includes(cropType.toLowerCase()) ? 1 : 0;
+      
+      return (bNameMatch + bDescMatch) - (aNameMatch + aDescMatch);
+    });
+    
+    setFilteredFacilities(filtered);
+  };
+
+  // Apply filters when storageType or searchQuery change
+  useEffect(() => {
+    let filtered = [...storageFacilities];
+    
+    // Apply search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(facility => 
+        facility.name.toLowerCase().includes(query) ||
+        facility.location.toLowerCase().includes(query) ||
+        (facility.description?.toLowerCase() || "").includes(query)
+      );
+    }
+    
+    // Apply storage type filter
+    if (storageType) {
+      if (storageType === "cold") {
+        filtered = filtered.filter(facility => 
+          facility.name.toLowerCase().includes("cold") || 
+          (facility.description?.toLowerCase() || "").includes("cold") ||
+          (facility.description?.toLowerCase() || "").includes("refrigerat") ||
+          facility.name.toLowerCase().includes("fresh")
+        );
+      } else if (storageType === "warehouse") {
+        filtered = filtered.filter(facility => 
+          facility.name.toLowerCase().includes("warehouse") || 
+          (facility.description?.toLowerCase() || "").includes("warehouse") ||
+          (facility.description?.toLowerCase() || "").includes("dry")
+        );
+      } else if (storageType === "silo") {
+        filtered = filtered.filter(facility => 
+          facility.name.toLowerCase().includes("silo") || 
+          (facility.description?.toLowerCase() || "").includes("silo") ||
+          facility.name.toLowerCase().includes("grain")
+        );
+      }
+    }
+    
+    setFilteredFacilities(filtered);
+  }, [searchQuery, storageType, storageFacilities]);
+
+  // Map storage facilities to UI display format
+  const storageOptionsFromDB = useMemo(() => {
+    const facilitiesToDisplay = filteredFacilities.length > 0 ? filteredFacilities : storageFacilities;
+    
+    return facilitiesToDisplay.map((facility, index) => {
+      // Generate synthetic data for each facility
+      const isColdStorage = facility.name.toLowerCase().includes("cold") || 
+                           (facility.description?.toLowerCase() || "").includes("cold") ||
+                           (facility.description?.toLowerCase() || "").includes("refrigerat");
+                           
+      const randomDistance = (Math.random() * 10).toFixed(1);
+      const randomTemperature = isColdStorage ? "2-4°C" : "15-25°C";
+      const randomHumidity = isColdStorage ? "85-90%" : "50-60%";
+      
+      // Calculate capacity percentage
+      const maxCapacity = facility.capacity || 5000;
+      const availablePercentage = Math.floor(Math.random() * 100);
+      const randomCapacity = `${availablePercentage}%`;
+      
+      const randomPrice = `₹${Math.floor(Math.random() * 5) + 3}-${Math.floor(Math.random() * 5) + 5} per kg/month`;
+      const randomRating = (Math.random() * 1 + 4).toFixed(1);
+      
+      // Determine crop types based on storage type
+      const cropTypes = isColdStorage 
+        ? ["fruits", "vegetables"] 
+        : facility.name.toLowerCase().includes("grain") || facility.name.toLowerCase().includes("warehouse")
+          ? ["grains", "cereals", "pulses"]
+          : ["grains", "cereals", "pulses", "spices"];
+      
+      // Select an appropriate icon based on facility type
+      let FacilityIcon = Box;
+      if (isColdStorage) {
+        FacilityIcon = Thermometer;
+      } else if (facility.name.toLowerCase().includes("warehouse")) {
+        FacilityIcon = Archive;
+      } else if (facility.name.toLowerCase().includes("silo")) {
+        FacilityIcon = Box;
+      }
+      
+      return {
+        id: facility.id,
+        name: facility.name,
+        distance: `${randomDistance} km`,
+        temperature: randomTemperature,
+        humidity: randomHumidity,
+        capacity: `${randomCapacity} available`,
+        priceRange: randomPrice,
+        image: "/placeholder.svg",
+        rating: parseFloat(randomRating),
+        cropTypes: cropTypes,
+        sharingAvailable: index % 2 === 0, // Alternate facilities have sharing
+        location: facility.location,
+        contactInfo: facility.contact_info || 'Contact information not available',
+        description: facility.description || 'No description available',
+        icon: FacilityIcon,
+        isSuitable: 
+          cropType === "fruits" || cropType === "vegetables" 
+            ? isColdStorage
+            : cropType === "grains" || cropType === "cereals" || cropType === "pulses"
+              ? !isColdStorage
+              : true,
+        availablePercentage
+      };
+    }).sort((a, b) => {
+      // Prioritize suitable facilities and those with more capacity
+      if (a.isSuitable && !b.isSuitable) return -1;
+      if (!a.isSuitable && b.isSuitable) return 1;
+      return b.availablePercentage - a.availablePercentage;
+    });
+  }, [filteredFacilities, storageFacilities, cropType]);
 
   const handleFacilityClick = (facility: any) => {
     setSelectedFacility(facility);
@@ -495,87 +623,137 @@ const Storage = () => {
                     <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {storageOptionsFromDB.map((option) => (
-                      <Card 
-                        key={option.id} 
-                        className="overflow-hidden shadow-sm hover:shadow-md transition-all hover-lift cursor-pointer"
-                        onClick={() => handleFacilityClick(option)}
-                      >
-                        <div className="h-48 overflow-hidden">
-                          <img 
-                            src={option.image} 
-                            alt={option.name} 
-                            className="w-full h-full object-cover transition-transform hover:scale-105"
+                  <>
+                    <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Search</label>
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by name or location" 
+                            className="w-full py-2 pl-10 pr-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                           />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         </div>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{option.name}</CardTitle>
-                            <div className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-md text-sm font-medium">
-                              {option.rating} ★
-                            </div>
-                          </div>
-                          <div className="flex items-center text-muted-foreground">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            <CardDescription className="text-sm">
-                              {option.location} ({option.distance} away)
-                            </CardDescription>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="flex items-center">
-                              <Thermometer className="h-4 w-4 text-primary mr-2" />
-                              <span className="text-sm">{option.temperature}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Droplets className="h-4 w-4 text-primary mr-2" />
-                              <span className="text-sm">{option.humidity}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 text-primary mr-2" />
-                              <span className="text-sm">{option.capacity}</span>
-                            </div>
-                            <div className="text-sm">
-                              {option.priceRange}
-                            </div>
-                          </div>
-                          
-                          {option.sharingAvailable && (
-                            <div className="mb-3 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-2 rounded-lg flex items-center">
-                              <Users className="h-4 w-4 text-indigo-500 mr-2" />
-                              <span className="text-sm text-indigo-700 dark:text-indigo-300">Sharing Available</span>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Storage Type</label>
+                        <select
+                          value={storageType}
+                          onChange={(e) => setStorageType(e.target.value)}
+                          className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        >
+                          <option value="">All Types</option>
+                          <option value="cold">Cold Storage</option>
+                          <option value="warehouse">Warehouse</option>
+                          <option value="silo">Grain Silo</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Sort By</label>
+                        <select className="w-full py-2 px-3 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                          <option value="relevance">Relevance</option>
+                          <option value="distance">Distance</option>
+                          <option value="rating">Rating (High to Low)</option>
+                          <option value="capacity">Available Capacity</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground mb-6">
+                      Showing {storageOptionsFromDB.length} storage facilities{storageOptionsFromDB.length > 0 && cropType && ` for ${cropType}`}{location && ` near ${location}`}
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {storageOptionsFromDB.map((option) => (
+                        <Card 
+                          key={option.id} 
+                          className={`overflow-hidden shadow-sm hover:shadow-md transition-all hover-lift cursor-pointer
+                            ${option.isSuitable && cropType ? 'ring-2 ring-primary/30' : ''}`}
+                          onClick={() => handleFacilityClick(option)}
+                        >
+                          {option.isSuitable && cropType && (
+                            <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                              Recommended
                             </div>
                           )}
-                        </CardContent>
-                        <CardFooter className="pt-0">
-                          <div className="flex gap-2 w-full">
-                            <Button 
-                              variant="outline"
-                              className="flex-1 py-2 bg-primary/10 text-primary font-medium hover:bg-primary/20"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleFacilityClick(option);
-                              }}
-                            >
-                              <Info className="h-4 w-4 mr-2" />
-                              View Details
-                            </Button>
-                            {option.sharingAvailable && (
-                              <Button
-                                variant="outline" 
-                                className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Share2 className="h-5 w-5" />
-                              </Button>
-                            )}
+                          <div className="h-48 overflow-hidden">
+                            <img 
+                              src={option.image} 
+                              alt={option.name} 
+                              className="w-full h-full object-cover transition-transform hover:scale-105"
+                            />
                           </div>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-start">
+                              <CardTitle className="text-lg">{option.name}</CardTitle>
+                              <div className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-md text-sm font-medium">
+                                {option.rating} ★
+                              </div>
+                            </div>
+                            <div className="flex items-center text-muted-foreground">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              <CardDescription className="text-sm">
+                                {option.location} ({option.distance} away)
+                              </CardDescription>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                              <div className="flex items-center">
+                                <Thermometer className="h-4 w-4 text-primary mr-2" />
+                                <span className="text-sm">{option.temperature}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Droplets className="h-4 w-4 text-primary mr-2" />
+                                <span className="text-sm">{option.humidity}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 text-primary mr-2" />
+                                <span className="text-sm">{option.capacity}</span>
+                              </div>
+                              <div className="text-sm">
+                                {option.priceRange}
+                              </div>
+                            </div>
+                            
+                            {option.sharingAvailable && (
+                              <div className="mb-3 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-2 rounded-lg flex items-center">
+                                <Users className="h-4 w-4 text-indigo-500 mr-2" />
+                                <span className="text-sm text-indigo-700 dark:text-indigo-300">Sharing Available</span>
+                              </div>
+                            )}
+                          </CardContent>
+                          <CardFooter className="pt-0">
+                            <div className="flex gap-2 w-full">
+                              <Button 
+                                variant="outline"
+                                className="flex-1 py-2 bg-primary/10 text-primary font-medium hover:bg-primary/20"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleFacilityClick(option);
+                                }}
+                              >
+                                <Info className="h-4 w-4 mr-2" />
+                                View Details
+                              </Button>
+                              {option.sharingAvailable && (
+                                <Button
+                                  variant="outline" 
+                                  className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Share2 className="h-5 w-5" />
+                                </Button>
+                              )}
+                            </div>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
