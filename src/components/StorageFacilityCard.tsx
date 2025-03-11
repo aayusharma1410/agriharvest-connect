@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Store, Phone, Tag, Calendar, Info, Thermometer, Droplets, Check } from 'lucide-react';
+import { MapPin, Store, Phone, Tag, Calendar, Info, Thermometer, Droplets, Check, BookOpen } from 'lucide-react';
 
 interface StorageFacilityCardProps {
   facility: {
@@ -147,8 +147,8 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
           className="flex-1 bg-primary hover:bg-primary/90" 
           onClick={() => onBook(facility.id)}
         >
-          <Calendar className="h-4 w-4 mr-2" />
-          Book
+          <BookOpen className="h-4 w-4 mr-2" />
+          Book Now
         </Button>
       </CardFooter>
     </Card>

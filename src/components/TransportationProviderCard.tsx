@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Truck, MapPin, PhoneCall, Weight, Tag, Shield, Check } from 'lucide-react';
+import { Calendar, Truck, MapPin, PhoneCall, Weight, Tag, Shield, Check, BookOpen } from 'lucide-react';
 
 interface TransportationProviderProps {
   provider: {
@@ -167,11 +167,12 @@ const TransportationProviderCard = ({ provider, formData, onBook, recommendedSch
           )}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
         <Button 
           className="w-full bg-primary hover:bg-primary/90" 
           onClick={() => onBook(provider.id)}
         >
+          <BookOpen className="h-4 w-4 mr-2" />
           Book Transport
         </Button>
       </CardFooter>
