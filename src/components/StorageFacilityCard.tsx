@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Store, Phone, Tag, Calendar, Info } from 'lucide-react';
+import { MapPin, Store, Phone, Tag, Calendar, Info, Thermometer, Droplets, Check } from 'lucide-react';
 
 interface StorageFacilityCardProps {
   facility: {
@@ -41,6 +41,39 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
   const getPriceRange = () => {
     return facility.price_range || "₹1,000 - ₹5,000 per ton/month";
   };
+  
+  // Determine if facility has high availability based on capacity
+  const hasHighAvailability = () => {
+    return facility.capacity && facility.capacity > 500;
+  };
+  
+  // Check for amenities based on description and name
+  const getAmenities = () => {
+    const name = facility.name.toLowerCase();
+    const desc = (facility.description || '').toLowerCase();
+    const amenities = [];
+    
+    if (name.includes('cold') || desc.includes('cold') || 
+        name.includes('refrigerated') || desc.includes('refrigerated')) {
+      amenities.push('Temperature Control');
+    }
+    
+    if (desc.includes('humidity') || desc.includes('moisture')) {
+      amenities.push('Humidity Control');
+    }
+    
+    if (desc.includes('pest') || desc.includes('fumigation')) {
+      amenities.push('Pest Control');
+    }
+    
+    if (desc.includes('security') || desc.includes('monitored') || desc.includes('safe')) {
+      amenities.push('24/7 Security');
+    }
+    
+    return amenities;
+  };
+  
+  const amenities = getAmenities();
 
   return (
     <Card className="w-full h-full shadow-md hover:shadow-lg transition-shadow">
@@ -53,7 +86,14 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
               <span className="text-sm text-muted-foreground">{facility.location}</span>
             </div>
           </div>
-          <Badge>{getFacilityType()}</Badge>
+          <div className="flex flex-col gap-2 items-end">
+            <Badge>{getFacilityType()}</Badge>
+            {hasHighAvailability() && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                High Availability
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -76,6 +116,20 @@ const StorageFacilityCard = ({ facility, onViewDetails, onBook }: StorageFacilit
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">{facility.contact_info}</span>
+            </div>
+          )}
+          
+          {amenities.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <h4 className="text-sm font-medium mb-2">Amenities</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {amenities.map((amenity, index) => (
+                  <div key={index} className="flex items-center gap-1 text-xs">
+                    <Check className="h-3 w-3 text-green-600" />
+                    <span>{amenity}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

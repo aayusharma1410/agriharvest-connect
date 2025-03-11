@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Truck, MapPin, PhoneCall, Weight, Tag } from 'lucide-react';
+import { Calendar, Truck, MapPin, PhoneCall, Weight, Tag, Shield, Check } from 'lucide-react';
 
 interface TransportationProviderProps {
   provider: {
@@ -30,9 +30,10 @@ interface TransportationProviderProps {
     pickupDate: string;
   };
   onBook: (providerId: string) => void;
+  recommendedSchemes?: Array<{id: string, name: string}>;
 }
 
-const TransportationProviderCard = ({ provider, formData, onBook }: TransportationProviderProps) => {
+const TransportationProviderCard = ({ provider, formData, onBook, recommendedSchemes }: TransportationProviderProps) => {
   // Calculate a match score (just for UI purposes)
   const getMatchPercentage = () => {
     let score = 80; // Base score
@@ -76,6 +77,34 @@ const TransportationProviderCard = ({ provider, formData, onBook }: Transportati
     if (matchScore >= 80) return "secondary";
     return "outline";
   };
+  
+  // Determine if provider specializes in certain crops
+  const getSpecialization = () => {
+    if (!provider.vehicle_type) return null;
+    
+    const vehicleType = provider.vehicle_type.toLowerCase();
+    const cropType = formData.cropType.toLowerCase();
+    
+    if ((cropType === "fruits" || cropType === "vegetables") && 
+        (vehicleType.includes("refrigerated") || vehicleType.includes("cold"))) {
+      return "Perishable Goods";
+    }
+    
+    if (cropType === "grains" && vehicleType.includes("heavy")) {
+      return "Bulk Grains";
+    }
+    
+    if (cropType === "spices" && vehicleType.includes("spice")) {
+      return "Spice Transport";
+    }
+    
+    return null;
+  };
+  
+  const specialization = getSpecialization();
+  
+  // Check if any government schemes apply to this provider (based on location or vehicle type)
+  const hasApplicableSchemes = recommendedSchemes && recommendedSchemes.length > 0;
 
   return (
     <Card className="w-full h-full shadow-md hover:shadow-lg transition-shadow">
@@ -87,9 +116,16 @@ const TransportationProviderCard = ({ provider, formData, onBook }: Transportati
               {provider.vehicle_type || "Standard Transport"}
             </CardDescription>
           </div>
-          <Badge variant={getBadgeVariant()}>
-            {matchScore}% Match
-          </Badge>
+          <div className="flex flex-col gap-2 items-end">
+            <Badge variant={getBadgeVariant()}>
+              {matchScore}% Match
+            </Badge>
+            {specialization && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                {specialization} Specialist
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -115,6 +151,20 @@ const TransportationProviderCard = ({ provider, formData, onBook }: Transportati
             <PhoneCall className="h-4 w-4 text-muted-foreground" />
             <span>{provider.contact_info}</span>
           </div>
+          
+          {hasApplicableSchemes && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-indigo-600" />
+                <span className="text-sm font-medium">Eligible for subsidy schemes</span>
+              </div>
+              {recommendedSchemes && recommendedSchemes.length > 0 && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Government support available through applicable schemes
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
       <CardFooter>
