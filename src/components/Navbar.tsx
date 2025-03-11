@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, User, Thermometer } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
+import IotSensors from "./IotSensors";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [language, setLanguage] = useState<"english" | "hindi">("english");
+  const [iotModalOpen, setIotModalOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
 
@@ -53,6 +55,7 @@ const Navbar = () => {
       login: "Login",
       logout: "Logout",
       profile: "Profile",
+      iotSensors: "IoT Sensors",
     },
     hindi: {
       home: "होम",
@@ -64,6 +67,7 @@ const Navbar = () => {
       login: "लॉग इन",
       logout: "लॉग आउट",
       profile: "प्रोफ़ाइल",
+      iotSensors: "आईओटी सेंसर",
     },
   };
 
@@ -98,6 +102,16 @@ const Navbar = () => {
                 {item.title}
               </Link>
             ))}
+            
+            {user && (
+              <button 
+                onClick={() => setIotModalOpen(true)}
+                className="flex items-center gap-1 text-sm text-foreground/80 hover:text-primary transition-colors"
+              >
+                <Thermometer size={16} className="mr-1" />
+                <span>{t.iotSensors}</span>
+              </button>
+            )}
             
             {user ? (
               <div className="relative group">
@@ -160,6 +174,19 @@ const Navbar = () => {
               </Link>
             ))}
             
+            {user && (
+              <button
+                onClick={() => {
+                  setIotModalOpen(true);
+                  toggleMenu();
+                }}
+                className="flex items-center w-full px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+              >
+                <Thermometer size={16} className="mr-2" />
+                {t.iotSensors}
+              </button>
+            )}
+            
             {user ? (
               <button
                 onClick={() => {
@@ -183,6 +210,12 @@ const Navbar = () => {
           </div>
         </div>
       )}
+      
+      {/* IoT Sensors Modal */}
+      <IotSensors 
+        isOpen={iotModalOpen}
+        onClose={() => setIotModalOpen(false)}
+      />
     </header>
   );
 };
