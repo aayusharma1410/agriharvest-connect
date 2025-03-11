@@ -15,20 +15,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Home, Menu, LogOut, User, Wheat, Truck, Package, Leaf, ScrollText, HelpCircle } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useMediaQuery } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import SearchBar from '@/components/SearchBar';
 import IotSensors from '@/components/IotSensors';
 
 const Navbar = () => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const { user, logout } = useAuth();
+  const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
